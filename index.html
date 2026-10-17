@@ -267,7 +267,8 @@
           <div class="font-bold text-white">📐 Física del Sistema + Conexión Automática Diaria:</div>
           <p>
             • <strong>Auto-Actualización:</strong> Al abrirse, este simulador busca automáticamente el archivo <code>datos_sni.json</code> generado por tu tarea programada diaria y consulta la API meteorológica de Guayaquil.<br>
-            • <strong>Efecto Colombia:</strong> Cada <strong>100 MW</strong> comprados a Colombia permiten apagar <strong>~12,8 m³/s</strong> de turbinas en Paute, ahorrando <strong>1,1 millones de m³/día</strong> en Mazar.
+            • <strong>Efecto Colombia:</strong> Cada <strong>100 MW</strong> comprados a Colombia permiten apagar <strong id="txt-ahorro-col">~7,7 m³/s</strong> de turbinas en Paute, ahorrando <strong id="txt-ahorro-col-hm3">0,66 millones de m³/día</strong> en Mazar.<br>
+            • <strong>Agua por MW en Paute:</strong> <span id="txt-k-paute">calculado cada día con datos reales de Celec Sur</span>. Es más que la caída física de la cascada porque Molino y Sopladora también usan el agua que llega a Amaluza entre las dos presas.
           </p>
         </div>
       </div>
@@ -470,8 +471,11 @@
 
     const COTA_MAXIMA_MAZAR = 2153.00;
     const COTA_CRITICA_SEGURA = 2115.00;
-    const HM3_POR_METRO_COTA_BAJA = 6.8;
+    let HM3_POR_METRO_COTA_BAJA = 6.8;   // se reemplaza con datos_sni.json → hm3_por_metro
     const GENERACION_INTERNA_BASE_SNI = 2500;
+    // MW que genera Paute por cada m³/s que sale de Mazar; se reemplaza con datos_sni.json → k_mw_por_m3s
+    // (calculado con la energía real de Mazar, Molino y Sopladora y la variación de la cota, Celec Sur)
+    let K_PAUTE = 13.0;
 
     let chartInstance = null;
 
@@ -580,6 +584,12 @@
         if (!res.ok) throw new Error('Usando datos integrados por defecto');
         const data = await res.json();
         DATOS_OFICIALES_DIA = { ...DATOS_OFICIALES_DIA, ...data };
+        if (DATOS_OFICIALES_DIA.k_mw_por_m3s) K_PAUTE = DATOS_OFICIALES_DIA.k_mw_por_m3s;
+        if (DATOS_OFICIALES_DIA.hm3_por_metro) HM3_POR_METRO_COTA_BAJA = DATOS_OFICIALES_DIA.hm3_por_metro;
+        const ahorroCol = 100 / K_PAUTE;
+        const elA = document.getElementById('txt-ahorro-col'); if (elA) elA.textContent = '~' + ahorroCol.toFixed(1).replace('.', ',') + ' m³/s';
+        const elB = document.getElementById('txt-ahorro-col-hm3'); if (elB) elB.textContent = (ahorroCol * 0.0864).toFixed(2).replace('.', ',') + ' millones de m³/día';
+        const elK = document.getElementById('txt-k-paute'); if (elK) elK.textContent = K_PAUTE.toFixed(1).replace('.', ',') + ' MW por cada m³/s que sale de Mazar (Celec Sur, ' + (DATOS_OFICIALES_DIA.fisica_periodo || 'últimos días') + '); Paute generó en promedio ' + (DATOS_OFICIALES_DIA.paute_7d_mw || '—') + ' MW en los últimos 7 días';
 
         document.getElementById('header-timestamp').textContent = `REPORTE OFICIAL EN VIVO: ${DATOS_OFICIALES_DIA.fecha_reporte}`;
         document.getElementById('sync-status-badge').textContent = '✅ Sincronizado con datos_sni.json de hoy';
@@ -669,8 +679,8 @@
       const cargaExigidaPauteMW = Math.max(200, Math.min(1757, demandaNetaAtender - GENERACION_INTERNA_BASE_SNI - ccsMW - importColombiaMW));
       const cargaPauteSinColombiaMW = Math.max(200, Math.min(1757, demandaNetaAtender - GENERACION_INTERNA_BASE_SNI - ccsMW));
 
-      const qTurbinadoPaute = Math.round(cargaExigidaPauteMW / 7.8);
-      const qTurbinadoSinColombia = Math.round(cargaPauteSinColombiaMW / 7.8);
+      const qTurbinadoPaute = Math.round(cargaExigidaPauteMW / K_PAUTE);
+      const qTurbinadoSinColombia = Math.round(cargaPauteSinColombiaMW / K_PAUTE);
 
       // 4. Balance hídrico neto en Mazar
       const balanceHidricoM3s = qMazar - qTurbinadoPaute;
@@ -735,7 +745,7 @@
       }
 
       // 6. Déficit estructural y días salvados por Colombia
-      const generacionSosteniblePauteMW = Math.round(qMazar * 7.8);
+      const generacionSosteniblePauteMW = Math.round(qMazar * K_PAUTE);
       const ofertaSostenibleSinVaciarMazar = GENERACION_INTERNA_BASE_SNI + ccsMW + importColombiaMW + generacionSosteniblePauteMW;
       const deficitRealMW = ofertaSostenibleSinVaciarMazar - demandaNetaAtender;
 

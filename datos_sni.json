@@ -1,13 +1,17 @@
 {
-  "fecha_reporte": "SÁBADO 17 OCT 2026 (11h02)",
-  "cota_mazar": 2123.78,
-  "caida_24h": 0.69,
-  "caudal_mazar": 37.62,
+  "fecha_reporte": "SÁBADO 17 OCT 2026 (13h10)",
+  "cota_mazar": 2123.84,
+  "caida_24h": 0.7,
+  "caudal_mazar": 37.84,
   "caudal_coca": 198.1,
   "importacion_colombia_mw": 0,
-  "temp_costa_c": 32.5,
-  "demanda_base_mw": 4455,
+  "temp_costa_c": 32.6,
+  "demanda_base_mw": 4440,
   "cortes_mw": 280,
   "cota_amaluza": 1973.9,
-  "cota_sopladora": 1315.7
+  "cota_sopladora": 1315.7,
+  "k_mw_por_m3s": 12.74,
+  "paute_7d_mw": 936,
+  "fisica_periodo": "2026-10-07 a 2026-10-16",
+  "hm3_por_metro": 5.68
 }
