@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitor SNI Ecuador - Cuenta Regresiva Mazar (Auto-Actualizable)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b0f19;
+      color: #e2e8f0;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      background: #1e293b;
+      border-radius: 999px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #38bdf8;
+      cursor: pointer;
+      border: 2px solid #0f172a;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+      transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    .slider-amber::-webkit-slider-thumb { background: #f59e0b !important; box-shadow: 0 0 10px rgba(245, 158, 11, 0.6) !important; }
+    .slider-emerald::-webkit-slider-thumb { background: #10b981 !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6) !important; }
+    .slider-rose::-webkit-slider-thumb { background: #f43f5e !important; box-shadow: 0 0 10px rgba(244, 63, 94, 0.6) !important; }
+    .slider-purple::-webkit-slider-thumb { background: #a855f7 !important; box-shadow: 0 0 10px rgba(168, 85, 247, 0.6) !important; }
+    .slider-yellow::-webkit-slider-thumb { background: #eab308 !important; box-shadow: 0 0 10px rgba(234, 179, 8, 0.6) !important; }
+  </style>
+</head>
+<body class="min-h-screen p-3 md:p-6">
+
+  <div class="max-w-7xl mx-auto space-y-5">
+
+    <!-- ENCABEZADO OFICIAL CON SOPORTE DE AUTO-ACTUALIZACIÓN JSON -->
+    <header class="bg-slate-900/95 border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/30">
+              <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+              <span id="header-timestamp">REPORTE OFICIAL EN VIVO: VIERNES 16 OCT 2026 (09h00)</span>
+            </span>
+            <span id="sync-status-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              🔄 Auto-Sync Activo (datos_sni.json / Clima API)
+            </span>
+            <button onclick="fetchLiveWeatherGuayaquil()" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40 hover:bg-sky-500/30 transition cursor-pointer">
+              🌡️ Sincronizar Clima Real Guayaquil Ahora
+            </button>
+          </div>
+          <h1 class="text-xl md:text-2xl font-extrabold text-white tracking-tight">
+            Simulador de Colapso Hidrológico, Clima e Importación del SNI (Ecuador)
+          </h1>
+          <p class="text-xs md:text-sm text-slate-400 mt-1">
+            Cota Mazar actual: <strong id="header-cota-actual" class="text-sky-400 mono">2.123,09 m s.n.m.</strong> — variación 24h: <strong id="header-caida-24h" class="text-rose-400 mono">-0,97 m</strong> y queda a solo <strong id="header-colchon-m" class="text-amber-400 mono">8,09 metros</strong> del límite seguro (2.115 m). Preparado para actualizarse automáticamente cada día vía GitHub Actions / Cron Job.
+          </p>
+        </div>
+
+        <!-- BOTONES DE ESCENARIOS PRECONFIGURADOS -->
+        <div class="flex flex-wrap gap-2">
+          <button onclick="applyPreset('actual')" id="btn-actual" class="px-3 py-2 rounded-xl text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40 hover:bg-sky-500/30 transition">
+            📊 Datos del Día (Con Colombia)
+          </button>
+          <button onclick="applyPreset('sin_colombia')" id="btn-sin_colombia" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-amber-300 border border-slate-700 hover:bg-slate-700 transition">
+            ⚠️ Escenario Sin Colombia
+          </button>
+          <button onclick="applyPreset('inamhi')" id="btn-inamhi" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 transition">
+            ⛈️ Alerta INAMHI (Fin de Semana)
+          </button>
+          <button onclick="applyPreset('calor_sedimentos')" id="btn-calor_sedimentos" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-rose-300 border border-slate-700 hover:bg-slate-700 transition">
+            🔥 Calor Costa + Paro Sedimentos Coca
+          </button>
+          <button onclick="applyPreset('ciep')" id="btn-ciep" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-emerald-300 border border-slate-700 hover:bg-slate-700 transition">
+            🛡️ Colombia Máx (420 MW) + Racionamiento
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- TARJETAS DE DIAGNÓSTICO EJECUTIVO EN TIEMPO REAL -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <!-- Tarjeta 1: Cuenta regresiva Mazar -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Tiempo hasta Cota Roja (2.115 m)</span>
+          <span id="kpi-colchon-badge" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-sky-500/15 text-sky-300 mono">Colchón: 8,09 m</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="kpi-days" class="text-3xl md:text-4xl font-extrabold mono text-amber-400">11.2 días</span>
+        </div>
+        <div id="kpi-date" class="mt-1 text-xs font-semibold text-slate-300">
+          Fecha estimada límite: <span class="text-white">27 de octubre</span>
+        </div>
+        <div id="kpi-drop-rate" class="mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 mono">
+          Ritmo: -0,72 m/día (Ayer cayó -0,97 m)
+        </div>
+      </div>
+
+      <!-- Tarjeta 2: Balance de Potencia SNI y Déficit -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Balance Estructural (Sin Vaciar Mazar)</div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="kpi-deficit" class="text-3xl md:text-4xl font-extrabold mono text-rose-400">-380 MW</span>
+        </div>
+        <div id="kpi-demand-total" class="mt-1 text-xs text-slate-300">
+          Demanda Neta a Cubrir: <strong class="text-white mono">4.395 MW</strong>
+        </div>
+        <div id="kpi-ac-impact" class="mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-rose-500/10 text-rose-300 border border-rose-500/20">
+          Sobrecarga A/C en Costa: +220 MW
+        </div>
+      </div>
+
+      <!-- Tarjeta 3: Estado de Coca Codo Sinclair + Importación Colombia -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Coca Codo + Rescate de Colombia</div>
+        <div class="mt-2 flex items-baseline gap-3">
+          <div>
+            <span id="kpi-ccs-mw" class="text-2xl md:text-3xl font-extrabold mono text-sky-400">815 MW</span>
+            <span class="text-[11px] text-slate-400 block">Coca Codo</span>
+          </div>
+          <div class="border-l border-slate-800 pl-3">
+            <span id="kpi-col-mw" class="text-2xl md:text-3xl font-extrabold mono text-yellow-400">+250 MW</span>
+            <span class="text-[11px] text-yellow-300/80 block">🇨🇴 Colombia</span>
+          </div>
+        </div>
+        <div id="kpi-paute-req" class="mt-1.5 text-xs text-slate-300">
+          Exigencia a Paute-Mazar: <strong class="text-amber-300 mono">830 MW</strong> (<span id="kpi-q-turbinado" class="mono">106 m³/s</span>)
+        </div>
+        <div id="kpi-sediment-badge" class="mt-1.5 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+          Sedimentos Río Coca: Operación Normal
+        </div>
+      </div>
+
+      <!-- Tarjeta 4: Riesgo de Apagón Residencial y Alivio Colombiano -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Impacto en Cortes y Oxígeno de Colombia</div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="kpi-blackout-hours" class="text-3xl md:text-4xl font-extrabold mono text-amber-400">3 a 4 h/día</span>
+        </div>
+        <div id="kpi-blackout-status" class="mt-1 text-xs font-semibold text-amber-300">
+          Mantenimiento este sábado 17 Oct; riesgo crítico en ~11 días
+        </div>
+        <div id="kpi-colombia-saved" class="mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-yellow-500/10 text-yellow-300 border border-yellow-500/20">
+          🇨🇴 Colombia regala +3,4 días extra de vida a Mazar
+        </div>
+      </div>
+    </section>
+
+    <!-- CUERPO PRINCIPAL: CONTROLES INTERACTIVOS (IZQUIERDA) + GRÁFICOS Y TANQUE MAZAR (DERECHA) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+      <!-- PANEL DE VARIABLES DE CONTROL (5 COLUMNAS) -->
+      <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3.5">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+          <h2 class="text-sm md:text-base font-bold text-white flex items-center gap-2">
+            🎛️ 6 Variables en Tiempo Real
+          </h2>
+          <span class="text-[11px] text-sky-400 font-medium">Mueve cada barra para simular</span>
+        </div>
+
+        <!-- Variable 1: Caudal Entrante a Mazar + Pronóstico Lluvias Austro -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-sky-300">1. Caudal Cuenca Paute-Mazar (Lluvias Austro)</label>
+            <span id="val-q-mazar" class="text-xs font-bold mono px-2 py-0.5 rounded bg-sky-500/15 text-sky-300">57.5 m³/s</span>
+          </div>
+          <input id="input-q-mazar" type="range" min="15" max="140" step="0.5" value="57.5" class="w-full" oninput="updateSimulation()" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Sequía (20 m³/s)</span>
+            <span id="lbl-q-mazar-ref" class="text-sky-300 font-medium">Reporte Hoy: 57,46 m³/s</span>
+            <span>Media Oct: 93,5 m³/s</span>
+          </div>
+        </div>
+
+        <!-- Variable 2: Caudal Coca Codo Sinclair y Efecto Sedimentos -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-emerald-300">2. Caudal Río Coca (Coca Codo Sinclair)</label>
+            <span id="val-q-coca" class="text-xs font-bold mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300">170 m³/s</span>
+          </div>
+          <input id="input-q-coca" type="range" min="90" max="290" step="1" value="170" class="w-full slider-emerald" oninput="updateSimulation()" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Estiaje (110 m³/s)</span>
+            <span class="text-emerald-300 font-medium">Hoy (&lt;200 m³/s): ~170 m³/s</span>
+            <span>⚠️ &gt;245 m³/s: Cierre Sedimentos</span>
+          </div>
+        </div>
+
+        <!-- Variable 3: Importación de Energía desde Colombia -->
+        <div class="p-3 rounded-xl bg-yellow-950/20 border border-yellow-500/30 space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-yellow-300 flex items-center gap-1.5">
+              <span>3. 🇨🇴 Compra de Energía a Colombia</span>
+            </label>
+            <span id="val-import-col" class="text-xs font-bold mono px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300">250 MW</span>
+          </div>
+          <input id="input-import-col" type="range" min="0" max="450" step="10" value="250" class="w-full slider-yellow" oninput="updateSimulation()" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Corte (0 MW)</span>
+            <span class="text-yellow-300 font-medium">Despacho estimado (250 MW)</span>
+            <span>Límite Enlace (450 MW)</span>
+          </div>
+        </div>
+
+        <!-- Variable 4: Pronóstico Clima en la Costa (Temperatura Guayaquil / A/C) -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-amber-300">4. Clima en la Costa: Calor Guayaquil / A/C</label>
+            <span id="val-temp-costa" class="text-xs font-bold mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">32.5 °C</span>
+          </div>
+          <input id="input-temp-costa" type="range" min="25" max="37" step="0.5" value="32.5" class="w-full slider-amber" oninput="updateSimulation()" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Lluvia INAMHI (27°C: +0 MW)</span>
+            <span class="text-amber-300 font-medium">Pico Tarde (32,5°C: +220 MW)</span>
+            <span>Calor Extremo (36°C: +392 MW)</span>
+          </div>
+        </div>
+
+        <!-- Variable 5: Demanda Nacional Base (MW) -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-purple-300">5. Demanda Nacional Base (Sin Clima Costa)</label>
+            <span id="val-demanda-base" class="text-xs font-bold mono px-2 py-0.5 rounded bg-purple-500/15 text-purple-300">4.455 MW</span>
+          </div>
+          <input id="input-demanda-base" type="range" min="4000" max="5000" step="25" value="4455" class="w-full slider-purple" oninput="updateSimulation()" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Valle/Media (4.200 MW)</span>
+            <span>Demanda Base Hoy (4.455 MW)</span>
+            <span>Pico Récord (5.000 MW)</span>
+          </div>
+        </div>
+
+        <!-- Variable 6: Cortes a Empresas + Racionamiento General -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-rose-300">6. Cortes a Empresas (MV/AV) y Racionamiento</label>
+            <span id="val-cortes-mw" class="text-xs font-bold mono px-2 py-0.5 rounded bg-rose-500/15 text-rose-300">280 MW</span>
+          </div>
+          <input id="input-cortes-mw" type="range" min="0" max="900" step="10" value="280" class="w-full slider-rose" oninput="updateSimulation()" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Sin cortes (0 MW)</span>
+            <span class="text-rose-300 font-medium">Restricción Industrial Hoy (~280 MW)</span>
+            <span>Cortes Generales 5h (600+ MW)</span>
+          </div>
+        </div>
+
+        <!-- NOTA METODOLÓGICA DEL MODELO FÍSICO -->
+        <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/60 text-[11px] text-slate-300 space-y-1">
+          <div class="font-bold text-white">📐 Física del Sistema + Conexión Automática Diaria:</div>
+          <p>
+            • <strong>Auto-Actualización:</strong> Al abrirse, este simulador busca automáticamente el archivo <code>datos_sni.json</code> generado por tu tarea programada diaria y consulta la API meteorológica de Guayaquil.<br>
+            • <strong>Efecto Colombia:</strong> Cada <strong>100 MW</strong> comprados a Colombia permiten apagar <strong>~12,8 m³/s</strong> de turbinas en Paute, ahorrando <strong>1,1 millones de m³/día</strong> en Mazar.
+          </p>
+        </div>
+      </div>
+
+      <!-- PANEL DERECHO: VISUALIZACIÓN DE CURVA DE AGOTAMIENTO + TANQUE DE MAZAR (7 COLUMNAS) -->
+      <div class="lg:col-span-7 flex flex-col gap-5">
+
+        <!-- Gráfico 1: Proyección Diaria de Cota Mazar -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 flex-1 flex flex-col">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-sm md:text-base font-bold text-white">
+                📉 Trayectoria del Embalse de Mazar (Próximos 20 Días)
+              </h3>
+              <p class="text-xs text-slate-400">
+                Compara la curva <strong>Con Importación de Colombia</strong> vs. <strong>Sin Colombia</strong> partiendo de la cota oficial del día
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 text-xs">
+              <span class="flex items-center gap-1.5 text-sky-400 font-medium">
+                <span class="w-3 h-1 bg-sky-400 rounded"></span> Cota Simulada Hoy
+              </span>
+              <span class="flex items-center gap-1.5 text-slate-400 font-medium">
+                <span class="w-3 h-0.5 border-b border-dashed border-slate-400"></span> Sin Colombia (0 MW)
+              </span>
+              <span class="flex items-center gap-1.5 text-rose-400 font-medium">
+                <span class="w-3 h-1 bg-rose-500 rounded"></span> Límite Seguro (2.115 m)
+              </span>
+            </div>
+          </div>
+
+          <div class="relative w-full h-64 md:h-72">
+            <canvas id="mazarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Fila Inferior: Tanque Visual del Embalse + Desglose de Generación en MW -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+
+          <!-- Tanque Visual en Corte Transversal de Mazar (5 cols) -->
+          <div class="md:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Corte Transversal: Presa Mazar
+                </h4>
+                <span id="tank-caida-24h" class="text-[10px] font-semibold text-rose-400 mono">-0,97 m en 24h</span>
+              </div>
+              <p id="tank-perdida-total" class="text-[11px] text-slate-400 mt-0.5">
+                Ya perdió 29,91 m desde julio (2.153 m)
+              </p>
+            </div>
+
+            <!-- Representación Gráfica del Embalse -->
+            <div class="my-3 relative h-48 w-full bg-slate-950 rounded-xl border border-slate-800 overflow-hidden flex flex-col justify-end">
+              <!-- Línea Cota Máxima 2153 -->
+              <div class="absolute top-2 left-2 right-2 border-b border-dashed border-slate-700 flex justify-between text-[10px] text-slate-400 pb-0.5 z-20">
+                <span>Cota Máx: 2.153,0 m</span>
+                <span>100%</span>
+              </div>
+
+              <!-- Nivel de Agua Dinámico -->
+              <div id="tank-level-bar" class="w-full bg-gradient-to-t from-sky-950 via-sky-600 to-cyan-400 transition-all duration-500 relative" style="height: 35%;">
+                <div class="absolute -top-5 left-2 right-2 flex justify-between items-center text-[11px] font-bold text-cyan-300 mono">
+                  <span id="tank-cota-label">Hoy: 2.123,09 m</span>
+                  <span id="tank-percent">21,3% útil</span>
+                </div>
+              </div>
+
+              <!-- Zona de Reserva Crítica Bajo 2115 m -->
+              <div class="w-full h-11 bg-rose-950/90 border-t-2 border-rose-500 flex flex-col justify-center px-2.5 text-[10px] z-10">
+                <div class="flex justify-between font-bold text-rose-300">
+                  <span>⚠️ Cota Roja: 2.115,0 m</span>
+                  <span>Paro Turbinas Mazar</span>
+                </div>
+                <div class="text-[9px] text-rose-400/90 leading-tight">
+                  2.115 a 2.098 m: ~62 HM³ (solo descarga a Molino)
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-1 text-[11px] text-slate-300 border-t border-slate-800 pt-2">
+              <div class="flex justify-between items-center">
+                <span>Colchón seguro disponible:</span>
+                <strong id="tank-colchon-bottom" class="text-amber-400 mono">8,09 m (~55,0 HM³)</strong>
+              </div>
+              <div class="flex justify-between items-center text-[10px] text-slate-400">
+                <span>Amaluza / Sopladora:</span>
+                <span id="tank-amaluza-sopladora" class="mono text-slate-300">1.973,9 m • 1.315,7 m</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desglose en Vivo del Balance Energético Nacional (7 cols) -->
+          <div class="md:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">
+                Despacho del SNI en Tiempo Real (MW)
+              </h4>
+              <p class="text-[11px] text-slate-400 mt-0.5">
+                Cómo se cubre la demanda hoy y cuánto alivio da la línea de Colombia
+              </p>
+            </div>
+
+            <div class="space-y-2 my-2.5 text-xs">
+              <!-- Barra Demanda Total con Clima Costa -->
+              <div>
+                <div class="flex justify-between mb-0.5">
+                  <span class="text-slate-300">1. Demanda Bruta (Base + Calor A/C Costa):</span>
+                  <strong id="bar-lbl-demanda" class="text-white mono">4.675 MW</strong>
+                </div>
+                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div id="bar-demanda" class="h-full bg-purple-500 transition-all duration-300" style="width: 88%;"></div>
+                </div>
+              </div>
+
+              <!-- Barra Menos Cortes a Empresas -->
+              <div>
+                <div class="flex justify-between mb-0.5">
+                  <span class="text-slate-300">2. Demanda Neta a Cubrir (Tras Cortes Empresas):</span>
+                  <strong id="bar-lbl-neta" class="text-amber-300 mono">4.395 MW</strong>
+                </div>
+                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div id="bar-neta" class="h-full bg-amber-500 transition-all duration-300" style="width: 83%;"></div>
+                </div>
+              </div>
+
+              <!-- Barra Parque Térmico + Otras Hidro -->
+              <div>
+                <div class="flex justify-between mb-0.5">
+                  <span class="text-slate-300">3. Parque Térmico + Otras Hidro (Agoyán, Daule, etc.):</span>
+                  <strong id="bar-lbl-firme" class="text-emerald-300 mono">2.500 MW</strong>
+                </div>
+                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div id="bar-firme" class="h-full bg-emerald-500 transition-all duration-300" style="width: 50%;"></div>
+                </div>
+              </div>
+
+              <!-- Barra Importación desde Colombia -->
+              <div>
+                <div class="flex justify-between mb-0.5">
+                  <span class="text-yellow-300 font-medium">4. 🇨🇴 Importación desde Colombia:</span>
+                  <strong id="bar-lbl-col" class="text-yellow-300 mono">250 MW</strong>
+                </div>
+                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div id="bar-col" class="h-full bg-yellow-400 transition-all duration-300" style="width: 55%;"></div>
+                </div>
+              </div>
+
+              <!-- Barra Coca Codo Sinclair -->
+              <div>
+                <div class="flex justify-between mb-0.5">
+                  <span class="text-slate-300">5. Aporte Efectivo Coca Codo Sinclair:</span>
+                  <strong id="bar-lbl-ccs" class="text-sky-300 mono">815 MW</strong>
+                </div>
+                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div id="bar-ccs" class="h-full bg-sky-400 transition-all duration-300" style="width: 54%;"></div>
+                </div>
+              </div>
+
+              <!-- Barra Exigencia al Complejo Paute-Mazar -->
+              <div>
+                <div class="flex justify-between mb-0.5">
+                  <span class="text-slate-300">6. Carga Forzada a Paute (Mazar-Molino-Sopladora):</span>
+                  <strong id="bar-lbl-paute" class="text-rose-400 mono">830 MW</strong>
+                </div>
+                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div id="bar-paute" class="h-full bg-rose-500 transition-all duration-300" style="width: 47%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="diagnostic-banner" class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 leading-relaxed">
+              <!-- Se llena dinámicamente -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Variables dinámicas globales que pueden ser actualizadas cada día por datos_sni.json
+    let DATOS_OFICIALES_DIA = {
+      fecha_reporte: "VIERNES 16 OCT 2026 (09h00)",
+      cota_mazar: 2123.09,
+      caida_24h: -0.97,
+      caudal_mazar: 57.46,
+      caudal_coca: 170,
+      importacion_colombia_mw: 250,
+      temp_costa_c: 32.5,
+      demanda_base_mw: 4455,
+      cortes_mw: 280,
+      cota_amaluza: 1973.9,
+      cota_sopladora: 1315.7
+    };
+
+    const COTA_MAXIMA_MAZAR = 2153.00;
+    const COTA_CRITICA_SEGURA = 2115.00;
+    const HM3_POR_METRO_COTA_BAJA = 6.8;
+    const GENERACION_INTERNA_BASE_SNI = 2500;
+
+    let chartInstance = null;
+
+    // Genera etiquetas de fechas dinámicas a partir de hoy para los próximos 20 días
+    function generarEtiquetasFechas() {
+      const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const etiquetas = [];
+      const hoy = new Date();
+      for (let i = 0; i <= 20; i++) {
+        const d = new Date(hoy);
+        d.setDate(hoy.getDate() + i);
+        const diaStr = String(d.getDate()).padStart(2, '0');
+        const mesStr = meses[d.getMonth()];
+        etiquetas.push(i === 0 ? `${diaStr} ${mesStr} (Hoy)` : `${diaStr} ${mesStr}`);
+      }
+      return etiquetas;
+    }
+
+    let fechasProyeccion = generarEtiquetasFechas();
+
+    function initChart() {
+      const ctx = document.getElementById('mazarChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: fechasProyeccion,
+          datasets: [
+            {
+              label: 'Cota Simulada (Con tus parámetros)',
+              data: [],
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.14)',
+              borderWidth: 3,
+              pointRadius: 3,
+              pointBackgroundColor: '#38bdf8',
+              fill: true,
+              tension: 0.25
+            },
+            {
+              label: 'Trayectoria SIN Colombia (0 MW)',
+              data: [],
+              borderColor: '#94a3b8',
+              borderWidth: 2,
+              borderDash: [4, 4],
+              pointRadius: 0,
+              fill: false,
+              tension: 0.25
+            },
+            {
+              label: 'Límite Seguro Operativo (2.115,00 m s.n.m.)',
+              data: Array(fechasProyeccion.length).fill(COTA_CRITICA_SEGURA),
+              borderColor: '#f43f5e',
+              borderWidth: 2,
+              borderDash: [6, 4],
+              pointRadius: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleColor: '#f8fafc',
+              bodyColor: '#cbd5e1',
+              borderColor: '#334155',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' m s.n.m.';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(51, 65, 85, 0.25)' },
+              ticks: { color: '#94a3b8', font: { size: 10 } }
+            },
+            y: {
+              min: 2111,
+              max: 2127,
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: {
+                color: '#94a3b8',
+                font: { size: 11 },
+                callback: function(value) { return value + ' m'; }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Función que intenta cargar datos_sni.json generado automáticamente cada día por GitHub Actions / Python
+    async function cargarDatosDiariosJSON() {
+      try {
+        const res = await fetch('./datos_sni.json?t=' + Date.now());
+        if (!res.ok) throw new Error('Usando datos integrados por defecto');
+        const data = await res.json();
+        DATOS_OFICIALES_DIA = { ...DATOS_OFICIALES_DIA, ...data };
+
+        document.getElementById('header-timestamp').textContent = `REPORTE OFICIAL EN VIVO: ${DATOS_OFICIALES_DIA.fecha_reporte}`;
+        document.getElementById('sync-status-badge').textContent = '✅ Sincronizado con datos_sni.json de hoy';
+        applyPreset('actual');
+      } catch (e) {
+        // Si se ejecuta localmente sin servidor JSON externo, usa los datos verificados integrados
+        applyPreset('actual');
+      }
+    }
+
+    // Función para consultar en vivo la temperatura real de Guayaquil desde Open-Meteo (Gratis y sin API Key)
+    async function fetchLiveWeatherGuayaquil() {
+      const badge = document.getElementById('sync-status-badge');
+      badge.textContent = '⏳ Consultando satélite Open-Meteo Guayaquil...';
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-2.1894&longitude=-79.8891&current=temperature_2m&daily=temperature_2m_max&timezone=America%2FGuayaquil');
+        const weather = await res.json();
+        const tempActual = weather.current?.temperature_2m;
+        const tempMaxHoy = weather.daily?.temperature_2m_max?.[0] || tempActual;
+        // Usamos la máxima del día o la actual para reflejar el pico de aire acondicionado
+        const tempUsar = Math.max(tempActual, tempMaxHoy);
+        if (tempUsar) {
+          document.getElementById('input-temp-costa').value = Math.min(37, Math.max(25, tempUsar.toFixed(1)));
+          badge.textContent = `🌡️ Clima Guayaquil Sincronizado: Actual ${tempActual}°C | Máx Hoy ${tempMaxHoy}°C`;
+          updateSimulation();
+        }
+      } catch (err) {
+        badge.textContent = '⚠️ Sin conexión a Open-Meteo (Usando valor manual)';
+      }
+    }
+
+    function updateSimulation() {
+      const cotaHoy = DATOS_OFICIALES_DIA.cota_mazar;
+      const colchonHoyMetros = Math.max(0.1, cotaHoy - COTA_CRITICA_SEGURA);
+
+      // Actualizar indicadores visuales del tanque con la cota oficial del día
+      const porcentajeUtil = Math.max(0, Math.min(100, ((cotaHoy - COTA_CRITICA_SEGURA) / (COTA_MAXIMA_MAZAR - COTA_CRITICA_SEGURA)) * 100));
+      document.getElementById('header-cota-actual').textContent = cotaHoy.toFixed(2).replace('.', ',') + ' m s.n.m.';
+      document.getElementById('header-caida-24h').textContent = (DATOS_OFICIALES_DIA.caida_24h >= 0 ? '+' : '') + DATOS_OFICIALES_DIA.caida_24h.toFixed(2).replace('.', ',') + ' m';
+      document.getElementById('header-colchon-m').textContent = colchonHoyMetros.toFixed(2).replace('.', ',') + ' metros';
+      document.getElementById('kpi-colchon-badge').textContent = 'Colchón: ' + colchonHoyMetros.toFixed(2).replace('.', ',') + ' m';
+      document.getElementById('tank-cota-label').textContent = 'Hoy: ' + cotaHoy.toFixed(2).replace('.', ',') + ' m';
+      document.getElementById('tank-percent').textContent = porcentajeUtil.toFixed(1).replace('.', ',') + '% útil';
+      document.getElementById('tank-level-bar').style.height = Math.max(24, Math.min(82, 24 + porcentajeUtil * 0.55)) + '%';
+      document.getElementById('tank-colchon-bottom').textContent = `${colchonHoyMetros.toFixed(2).replace('.', ',')} m (~${(colchonHoyMetros * HM3_POR_METRO_COTA_BAJA).toFixed(1).replace('.', ',')} HM³)`;
+
+      const qMazar = parseFloat(document.getElementById('input-q-mazar').value);
+      const qCoca = parseFloat(document.getElementById('input-q-coca').value);
+      const importColombiaMW = parseFloat(document.getElementById('input-import-col').value);
+      const tempCosta = parseFloat(document.getElementById('input-temp-costa').value);
+      const demandaBase = parseFloat(document.getElementById('input-demanda-base').value);
+      const cortesMW = parseFloat(document.getElementById('input-cortes-mw').value);
+
+      // Actualizar etiquetas de los 6 sliders
+      document.getElementById('val-q-mazar').textContent = qMazar.toFixed(1) + ' m³/s';
+      document.getElementById('val-q-coca').textContent = qCoca.toFixed(0) + ' m³/s';
+      document.getElementById('val-import-col').textContent = importColombiaMW.toFixed(0) + ' MW';
+      document.getElementById('val-temp-costa').textContent = tempCosta.toFixed(1) + ' °C';
+      document.getElementById('val-demanda-base').textContent = demandaBase.toLocaleString('es-EC') + ' MW';
+      document.getElementById('val-cortes-mw').textContent = cortesMW.toFixed(0) + ' MW';
+
+      // 1. Impacto del clima en la Costa
+      const sobrecargaAC = Math.max(0, Math.round((tempCosta - 28.0) * 49));
+      const demandaTotalBruta = demandaBase + sobrecargaAC;
+      const demandaNetaAtender = Math.max(3100, demandaTotalBruta - cortesMW);
+
+      // 2. Generación de Coca Codo Sinclair
+      let ccsMW = Math.min(1350, Math.round(qCoca * 4.79));
+      const sedimentBadge = document.getElementById('kpi-sediment-badge');
+      let alertaSedimentos = false;
+
+      if (qCoca >= 245) {
+        ccsMW = Math.round(ccsMW * 0.52);
+        alertaSedimentos = true;
+        sedimentBadge.textContent = '⚠️ Paro Parcial por Sedimentos (>245 m³/s)';
+        sedimentBadge.className = 'mt-1.5 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-rose-500/15 text-rose-300 border border-rose-500/30';
+      } else if (qCoca >= 220) {
+        ccsMW = Math.round(ccsMW * 0.85);
+        sedimentBadge.textContent = '⚡ Turbidez Alta: Purga en Desarenador';
+        sedimentBadge.className = 'mt-1.5 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30';
+      } else {
+        sedimentBadge.textContent = 'Sedimentos Río Coca: Operación Normal';
+        sedimentBadge.className = 'mt-1.5 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20';
+      }
+
+      // 3. Carga exigida al complejo Paute Integral CON y SIN Colombia
+      const cargaExigidaPauteMW = Math.max(200, Math.min(1757, demandaNetaAtender - GENERACION_INTERNA_BASE_SNI - ccsMW - importColombiaMW));
+      const cargaPauteSinColombiaMW = Math.max(200, Math.min(1757, demandaNetaAtender - GENERACION_INTERNA_BASE_SNI - ccsMW));
+
+      const qTurbinadoPaute = Math.round(cargaExigidaPauteMW / 7.8);
+      const qTurbinadoSinColombia = Math.round(cargaPauteSinColombiaMW / 7.8);
+
+      // 4. Balance hídrico neto en Mazar
+      const balanceHidricoM3s = qMazar - qTurbinadoPaute;
+      const cambioVolumenDiarioHM3 = (balanceHidricoM3s * 86400) / 1000000;
+      const cambioCotaDiarioMetros = cambioVolumenDiarioHM3 / HM3_POR_METRO_COTA_BAJA;
+
+      const balanceSinColM3s = qMazar - qTurbinadoSinColombia;
+      const cambioCotaSinColMetros = ((balanceSinColM3s * 86400) / 1000000) / HM3_POR_METRO_COTA_BAJA;
+
+      // 5. Días restantes hasta 2.115 m
+      const kpiDays = document.getElementById('kpi-days');
+      const kpiDate = document.getElementById('kpi-date');
+      const kpiDropRate = document.getElementById('kpi-drop-rate');
+
+      let diasHastaColapso = Infinity;
+      if (cambioCotaDiarioMetros < -0.02) {
+        diasHastaColapso = colchonHoyMetros / Math.abs(cambioCotaDiarioMetros);
+      }
+
+      let diasSinColombia = Infinity;
+      if (cambioCotaSinColMetros < -0.02) {
+        diasSinColombia = colchonHoyMetros / Math.abs(cambioCotaSinColMetros);
+      }
+
+      const serieConColombia = [];
+      const serieSinColombia = [];
+      for (let d = 0; d < fechasProyeccion.length; d++) {
+        const cotaCon = Math.max(2111.5, Math.min(2129.0, cotaHoy + cambioCotaDiarioMetros * d));
+        const cotaSin = Math.max(2111.5, Math.min(2129.0, cotaHoy + cambioCotaSinColMetros * d));
+        serieConColombia.push(cotaCon);
+        serieSinColombia.push(cotaSin);
+      }
+
+      chartInstance.data.datasets[0].data = serieConColombia;
+      chartInstance.data.datasets[1].data = serieSinColombia;
+      chartInstance.update();
+
+      if (cambioCotaDiarioMetros >= -0.02) {
+        kpiDays.textContent = 'Estable / Sube';
+        kpiDays.className = 'text-2xl md:text-3xl font-extrabold mono text-emerald-400';
+        kpiDate.innerHTML = 'Embalse en recuperación: <span class="text-emerald-300">No toca 2.115 m</span>';
+        kpiDropRate.textContent = `Ritmo: +${Math.abs(cambioCotaDiarioMetros).toFixed(2)} m/día (+${Math.abs(cambioVolumenDiarioHM3).toFixed(1)} HM³/día)`;
+        kpiDropRate.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 mono';
+      } else {
+        const diasRedondeados = Math.max(1.0, diasHastaColapso);
+        kpiDays.textContent = diasRedondeados.toFixed(1) + ' días';
+
+        const indiceDiaColapso = Math.min(fechasProyeccion.length - 1, Math.round(diasRedondeados));
+        const textoFechaColapso = diasRedondeados <= 20 ? fechasProyeccion[indiceDiaColapso] : 'Más de 20 días';
+
+        if (diasRedondeados <= 7) {
+          kpiDays.className = 'text-3xl md:text-4xl font-extrabold mono text-rose-500';
+        } else if (diasRedondeados <= 13) {
+          kpiDays.className = 'text-3xl md:text-4xl font-extrabold mono text-amber-400';
+        } else {
+          kpiDays.className = 'text-3xl md:text-4xl font-extrabold mono text-sky-400';
+        }
+
+        kpiDate.innerHTML = `Toca 2.115 m el: <span class="text-white font-bold">${textoFechaColapso}</span>`;
+        kpiDropRate.textContent = `Ritmo: ${cambioCotaDiarioMetros.toFixed(2)} m/día (${cambioVolumenDiarioHM3.toFixed(1)} HM³/día)`;
+        kpiDropRate.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 mono';
+      }
+
+      // 6. Déficit estructural y días salvados por Colombia
+      const generacionSosteniblePauteMW = Math.round(qMazar * 7.8);
+      const ofertaSostenibleSinVaciarMazar = GENERACION_INTERNA_BASE_SNI + ccsMW + importColombiaMW + generacionSosteniblePauteMW;
+      const deficitRealMW = ofertaSostenibleSinVaciarMazar - demandaNetaAtender;
+
+      const kpiDeficit = document.getElementById('kpi-deficit');
+      kpiDeficit.textContent = (deficitRealMW >= 0 ? '+' : '') + deficitRealMW + ' MW';
+      kpiDeficit.className = deficitRealMW < 0
+        ? 'text-3xl md:text-4xl font-extrabold mono text-rose-400'
+        : 'text-3xl md:text-4xl font-extrabold mono text-emerald-400';
+
+      document.getElementById('kpi-demand-total').innerHTML = `Demanda Neta a Cubrir: <strong class="text-white mono">${demandaNetaAtender.toLocaleString('es-EC')} MW</strong>`;
+      document.getElementById('kpi-ac-impact').textContent = `Sobrecarga A/C Costa (${tempCosta.toFixed(1)}°C): +${sobrecargaAC} MW`;
+
+      document.getElementById('kpi-ccs-mw').textContent = ccsMW + ' MW';
+      document.getElementById('kpi-col-mw').textContent = '+' + importColombiaMW + ' MW';
+      document.getElementById('kpi-paute-req').innerHTML = `Exigencia a Paute-Mazar: <strong class="text-amber-300 mono">${cargaExigidaPauteMW} MW</strong> (<span class="mono">${qTurbinadoPaute} m³/s</span>)`;
+
+      const kpiColSaved = document.getElementById('kpi-colombia-saved');
+      if (importColombiaMW === 0) {
+        kpiColSaved.textContent = '⚠️ Sin importación de Colombia (0 días extra)';
+        kpiColSaved.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-rose-500/15 text-rose-300 border border-rose-500/30';
+      } else if (!isFinite(diasHastaColapso)) {
+        kpiColSaved.textContent = `🇨🇴 Con ${importColombiaMW} MW de Colombia se evita el vaciado`;
+        kpiColSaved.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+      } else {
+        const diasGanados = Math.max(0, diasHastaColapso - diasSinColombia);
+        kpiColSaved.textContent = `🇨🇴 Colombia (${importColombiaMW} MW) da +${diasGanados.toFixed(1)} días de oxígeno`;
+        kpiColSaved.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-yellow-500/15 text-yellow-300 border border-yellow-500/30';
+      }
+
+      const kpiBlackoutHours = document.getElementById('kpi-blackout-hours');
+      const kpiBlackoutStatus = document.getElementById('kpi-blackout-status');
+
+      if (deficitRealMW >= -40) {
+        kpiBlackoutHours.textContent = '0 h/día';
+        kpiBlackoutHours.className = 'text-3xl md:text-4xl font-extrabold mono text-emerald-400';
+        kpiBlackoutStatus.textContent = 'Suministro equilibrado sin drenar Mazar';
+        kpiBlackoutStatus.className = 'mt-1 text-xs font-semibold text-emerald-300';
+      } else {
+        const horasEstimadas = Math.min(12, Math.max(2, Math.round(Math.abs(deficitRealMW) / 110)));
+        kpiBlackoutHours.textContent = `${horasEstimadas} a ${horasEstimadas + 1} h/día`;
+        kpiBlackoutHours.className = 'text-3xl md:text-4xl font-extrabold mono text-amber-400';
+        kpiBlackoutStatus.textContent = diasHastaColapso <= 9
+          ? `⚠️ Peligro de cortes residenciales en ${diasHastaColapso.toFixed(0)} días`
+          : `Déficit cubierto hoy gastando agua de Mazar + Colombia`;
+        kpiBlackoutStatus.className = 'mt-1 text-xs font-semibold text-amber-300';
+      }
+
+      // Actualizar barras de progreso
+      document.getElementById('bar-lbl-demanda').textContent = demandaTotalBruta.toLocaleString('es-EC') + ' MW';
+      document.getElementById('bar-demanda').style.width = Math.min(100, (demandaTotalBruta / 5300) * 100) + '%';
+
+      document.getElementById('bar-lbl-neta').textContent = demandaNetaAtender.toLocaleString('es-EC') + ' MW';
+      document.getElementById('bar-neta').style.width = Math.min(100, (demandaNetaAtender / 5300) * 100) + '%';
+
+      document.getElementById('bar-lbl-firme').textContent = GENERACION_INTERNA_BASE_SNI.toLocaleString('es-EC') + ' MW';
+      document.getElementById('bar-firme').style.width = Math.min(100, (GENERACION_INTERNA_BASE_SNI / 5300) * 100) + '%';
+
+      document.getElementById('bar-lbl-col').textContent = importColombiaMW.toLocaleString('es-EC') + ' MW';
+      document.getElementById('bar-col').style.width = Math.min(100, (importColombiaMW / 450) * 100) + '%';
+
+      document.getElementById('bar-lbl-ccs').textContent = ccsMW.toLocaleString('es-EC') + ' MW';
+      document.getElementById('bar-ccs').style.width = Math.min(100, (ccsMW / 1500) * 100) + '%';
+
+      document.getElementById('bar-lbl-paute').textContent = cargaExigidaPauteMW.toLocaleString('es-EC') + ' MW';
+      document.getElementById('bar-paute').style.width = Math.min(100, (cargaExigidaPauteMW / 1757) * 100) + '%';
+
+      const banner = document.getElementById('diagnostic-banner');
+      if (alertaSedimentos) {
+        banner.className = 'p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-[11px] text-rose-200 leading-relaxed';
+        banner.innerHTML = `<strong>⚠️ Paro en Coca Codo por Sedimentos:</strong> Con ${qCoca} m³/s en el río Coca, la alta turbidez obliga a cerrar compuertas en Coca Codo Sinclair (bajando a ${ccsMW} MW). Eso anula el alivio de Colombia y fuerza a Paute-Mazar a turbinar <strong>${qTurbinadoPaute} m³/s</strong>, hundiendo la cota a <strong>${cambioCotaDiarioMetros.toFixed(2)} m/día</strong>.`;
+      } else if (cambioCotaDiarioMetros >= -0.02) {
+        banner.className = 'p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-[11px] text-emerald-200 leading-relaxed';
+        banner.innerHTML = `<strong>✅ Estabilización de Mazar Lograda:</strong> La combinación de <strong>${importColombiaMW} MW de Colombia</strong>, ${qMazar.toFixed(1)} m³/s de lluvias en el Paute y menor consumo de A/C en la Costa reduce el caudal turbinado a <strong>${qTurbinadoPaute} m³/s</strong>, deteniendo la caída del embalse.`;
+      } else {
+        const ahorroAguaColM3s = qTurbinadoSinColombia - qTurbinadoPaute;
+        banner.className = 'p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 leading-relaxed';
+        banner.innerHTML = `<strong>Diagnóstico Automático del Día:</strong> Mazar registra <strong>${cotaHoy.toFixed(2)} m</strong> (a ${colchonHoyMetros.toFixed(2)} m del límite) con un caudal entrante de <strong>${qMazar.toFixed(1)} m³/s</strong>. Gracias a los <strong>${importColombiaMW} MW de Colombia</strong>, se ahorran ${ahorroAguaColM3s} m³/s en Paute y la caída se frena de ${Math.abs(cambioCotaSinColMetros).toFixed(2)} m/día a <strong>${Math.abs(cambioCotaDiarioMetros).toFixed(2)} m/día</strong>.`;
+      }
+    }
+
+    function applyPreset(preset) {
+      if (preset === 'actual') {
+        document.getElementById('input-q-mazar').value = DATOS_OFICIALES_DIA.caudal_mazar;
+        document.getElementById('input-q-coca').value = DATOS_OFICIALES_DIA.caudal_coca;
+        document.getElementById('input-import-col').value = DATOS_OFICIALES_DIA.importacion_colombia_mw;
+        document.getElementById('input-temp-costa').value = DATOS_OFICIALES_DIA.temp_costa_c;
+        document.getElementById('input-demanda-base').value = DATOS_OFICIALES_DIA.demanda_base_mw;
+        document.getElementById('input-cortes-mw').value = DATOS_OFICIALES_DIA.cortes_mw;
+      } else if (preset === 'sin_colombia') {
+        document.getElementById('input-q-mazar').value = DATOS_OFICIALES_DIA.caudal_mazar;
+        document.getElementById('input-q-coca').value = DATOS_OFICIALES_DIA.caudal_coca;
+        document.getElementById('input-import-col').value = 0;
+        document.getElementById('input-temp-costa').value = DATOS_OFICIALES_DIA.temp_costa_c;
+        document.getElementById('input-demanda-base').value = DATOS_OFICIALES_DIA.demanda_base_mw;
+        document.getElementById('input-cortes-mw').value = DATOS_OFICIALES_DIA.cortes_mw;
+      } else if (preset === 'inamhi') {
+        document.getElementById('input-q-mazar').value = 82.0;
+        document.getElementById('input-q-coca').value = 205;
+        document.getElementById('input-import-col').value = 300;
+        document.getElementById('input-temp-costa').value = 28.5;
+        document.getElementById('input-demanda-base').value = 4350;
+        document.getElementById('input-cortes-mw').value = 280;
+      } else if (preset === 'calor_sedimentos') {
+        document.getElementById('input-q-mazar').value = 35.0;
+        document.getElementById('input-q-coca').value = 260;
+        document.getElementById('input-import-col').value = 150;
+        document.getElementById('input-temp-costa').value = 35.0;
+        document.getElementById('input-demanda-base').value = 4550;
+        document.getElementById('input-cortes-mw').value = 250;
+      } else if (preset === 'ciep') {
+        document.getElementById('input-q-mazar').value = DATOS_OFICIALES_DIA.caudal_mazar;
+        document.getElementById('input-q-coca').value = DATOS_OFICIALES_DIA.caudal_coca;
+        document.getElementById('input-import-col').value = 420;
+        document.getElementById('input-temp-costa').value = DATOS_OFICIALES_DIA.temp_costa_c;
+        document.getElementById('input-demanda-base').value = DATOS_OFICIALES_DIA.demanda_base_mw;
+        document.getElementById('input-cortes-mw').value = DATOS_OFICIALES_DIA.cortes_mw;
+      }
+      updateSimulation();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      cargarDatosDiariosJSON();
+    });
+  </script>
+</body>
+</html>
