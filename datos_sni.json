@@ -1,10 +1,10 @@
 {
-  "fecha_reporte": "SÁBADO 17 OCT 2026 (07h40)",
+  "fecha_reporte": "SÁBADO 17 OCT 2026 (07h45)",
   "cota_mazar": 2123.09,
   "caida_24h": -0.97,
   "caudal_mazar": 57.46,
   "caudal_coca": 170,
-  "importacion_colombia_mw": 250,
+  "importacion_colombia_mw": 0,
   "temp_costa_c": 32.7,
   "demanda_base_mw": 4455,
   "cortes_mw": 280,
