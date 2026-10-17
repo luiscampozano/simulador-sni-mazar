@@ -2,8 +2,8 @@ name: Actualizar Datos SNI Mazar Diariamente
 
 on:
   schedule:
-    # 14:15 UTC equivale exactamente a las 09:15 AM en Ecuador (UTC-5)
-    - cron: '15 14 * * *'
+    # 14:45 UTC equivale exactamente a las 09:45 AM en Ecuador (UTC-5)
+    - cron: '45 14 * * *'
   workflow_dispatch: # Te permite ejecutarlo manualmente con un botón cuando quieras
 
 permissions:
