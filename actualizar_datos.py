@@ -100,6 +100,42 @@ try:
 except Exception as e:
     print(f"Aviso Open-Meteo Clima: {e}")
 
+# 4b. Lluvia pronosticada en las cuencas (Open-Meteo), con la misma regla del simulador "Cuenta regresiva Mazar":
+#     seco si se esperan < 15 mm en 7 días; lluvia sostenida ("nino") si se esperan > 70 mm y ya llovieron > 40 mm
+#     la semana anterior; en otro caso, un pulso de lluvia ("inamhi").
+try:
+    url_lluvia = ("https://api.open-meteo.com/v1/forecast?latitude=-2.75,-2.55,-0.20,-0.05"
+                  "&longitude=-78.85,-78.60,-77.70,-77.55&daily=precipitation_sum&past_days=7&forecast_days=7"
+                  "&timezone=America%2FGuayaquil")
+    req_ll = urllib.request.Request(url_lluvia, headers={"User-Agent": "MonitorSNI-Lluvia/1.0"})
+    with urllib.request.urlopen(req_ll, timeout=20) as resp:
+        locs = json.loads(resp.read().decode("utf-8"))
+    hoy_iso = ahora.date().isoformat()
+
+    def _cuenca(idx):
+        pas, fut = [], []
+        for j in idx:
+            d = locs[j]["daily"]
+            k = d["time"].index(hoy_iso)
+            pas.append(sum(x or 0 for x in d["precipitation_sum"][k - 7:k]))
+            fut.append(sum(x or 0 for x in d["precipitation_sum"][k:k + 7]))
+        return sum(pas) / len(pas), sum(fut) / len(fut)
+
+    def _categoria(pasado, futuro):
+        if futuro < 15:
+            return "seco"
+        if futuro > 70 and pasado > 40:
+            return "nino"
+        return "inamhi"
+
+    for nombre, idx in (("paute", [0, 1]), ("coca", [2, 3])):
+        pas, fut = _cuenca(idx)
+        datos[f"lluvia_{nombre}"] = _categoria(pas, fut)
+        datos[f"lluvia_{nombre}_mm"] = {"ultimos_7d": round(pas), "proximos_7d": round(fut)}
+        print(f"Lluvia cuenca {nombre}: {pas:.0f} mm pasados, {fut:.0f} mm previstos → {datos[f'lluvia_{nombre}']}")
+except Exception as e:
+    print(f"Aviso lluvia Open-Meteo: {e}. Se conservan valores previos.")
+
 # 5. CENACE (página "Información Operativa"): generación real cada media hora
 #    Térmica, renovable, importación desde Colombia, demanda atendida, hidráulica total y energía por central.
 #    El servidor de Cenace no envía su certificado intermedio (Sectigo DV R36): se descarga desde la dirección
@@ -336,3 +372,4 @@ print(f"- Demanda base equivalente: {datos.get('demanda_base_mw')} MW (atendida 
 print(f"- Generación firme (térmica + renovable + otras hidro): {datos.get('generacion_firme_mw')} MW")
 print(f"- Factor Paute: {datos.get('k_mw_por_m3s')} MW por m³/s; Paute 7 días: {datos.get('paute_7d_mw')} MW")
 print(f"- Cortes Empresas: {datos.get('cortes_mw')} MW")
+print(f"- Lluvia: Paute {datos.get('lluvia_paute')} {datos.get('lluvia_paute_mm')}, Coca {datos.get('lluvia_coca')} {datos.get('lluvia_coca_mm')}")

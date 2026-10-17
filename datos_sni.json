@@ -5,8 +5,8 @@
   "caudal_mazar": 37.84,
   "caudal_coca": 180.4,
   "importacion_colombia_mw": 2,
-  "temp_costa_c": 32.5,
-  "demanda_base_mw": 4450,
+  "temp_costa_c": 32.6,
+  "demanda_base_mw": 4445,
   "cortes_mw": 280,
   "cota_amaluza": 1970.75,
   "cota_sopladora": 1315.55,
@@ -20,5 +20,15 @@
   "termica_mw": 1279,
   "otras_hidro_mw": 1312,
   "generacion_firme_mw": 2590,
-  "cenace_ok": true
+  "cenace_ok": true,
+  "lluvia_paute": "inamhi",
+  "lluvia_paute_mm": {
+    "ultimos_7d": 23,
+    "proximos_7d": 86
+  },
+  "lluvia_coca": "inamhi",
+  "lluvia_coca_mm": {
+    "ultimos_7d": 85,
+    "proximos_7d": 67
+  }
 }

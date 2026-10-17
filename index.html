@@ -204,6 +204,30 @@
           </div>
         </div>
 
+        <!-- Pronóstico de lluvia en las cuencas (Open-Meteo) -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-2">
+          <label class="text-xs font-semibold text-sky-300">🌧️ Pronóstico de lluvia en las cuencas</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="text-[11px] text-slate-300 space-y-1 min-w-0">
+              <span class="block">Cuenca del Paute (Mazar)</span>
+              <select id="input-lluvia-paute" onchange="updateSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-white">
+                <option value="seco">Seco: el estiaje sigue</option>
+                <option value="inamhi">Pulso de lluvia (2–3 días)</option>
+                <option value="nino">Lluvia sostenida</option>
+              </select>
+            </label>
+            <label class="text-[11px] text-slate-300 space-y-1 min-w-0">
+              <span class="block">Cuenca del Coca (Coca Codo)</span>
+              <select id="input-lluvia-coca" onchange="updateSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-white">
+                <option value="seco">Seco: el estiaje sigue</option>
+                <option value="inamhi">Pulso de lluvia (2–3 días)</option>
+                <option value="nino">Lluvia sostenida</option>
+              </select>
+            </label>
+          </div>
+          <p id="lbl-lluvia" class="text-[10px] text-slate-400 leading-snug">Pronóstico automático de Open-Meteo para los próximos 7 días. Seco: < 15 mm; lluvia sostenida: > 70 mm tras una semana con > 40 mm; en otro caso, pulso de lluvia.</p>
+        </div>
+
         <!-- Variable 3: Importación de Energía desde Colombia -->
         <div class="p-3 rounded-xl bg-yellow-950/20 border border-yellow-500/30 space-y-1">
           <div class="flex justify-between items-center">
@@ -586,6 +610,11 @@
         DATOS_OFICIALES_DIA = { ...DATOS_OFICIALES_DIA, ...data };
         if (DATOS_OFICIALES_DIA.k_mw_por_m3s) K_PAUTE = DATOS_OFICIALES_DIA.k_mw_por_m3s;
         if (DATOS_OFICIALES_DIA.generacion_firme_mw) GENERACION_INTERNA_BASE_SNI = DATOS_OFICIALES_DIA.generacion_firme_mw;
+        if (DATOS_OFICIALES_DIA.lluvia_paute) document.getElementById('input-lluvia-paute').value = DATOS_OFICIALES_DIA.lluvia_paute;
+        if (DATOS_OFICIALES_DIA.lluvia_coca) document.getElementById('input-lluvia-coca').value = DATOS_OFICIALES_DIA.lluvia_coca;
+        const lp = DATOS_OFICIALES_DIA.lluvia_paute_mm, lc = DATOS_OFICIALES_DIA.lluvia_coca_mm;
+        if (lp && lc) document.getElementById('lbl-lluvia').textContent =
+          `Open-Meteo: Paute ${lp.ultimos_7d} mm en los últimos 7 días y ${lp.proximos_7d} mm previstos; Coca ${lc.ultimos_7d} mm y ${lc.proximos_7d} mm. Seco: < 15 mm previstos; lluvia sostenida: > 70 mm tras una semana con > 40 mm; en otro caso, pulso de lluvia.`;
         if (DATOS_OFICIALES_DIA.hm3_por_metro) HM3_POR_METRO_COTA_BAJA = DATOS_OFICIALES_DIA.hm3_por_metro;
         const ahorroCol = 100 / K_PAUTE;
         const elA = document.getElementById('txt-ahorro-col'); if (elA) elA.textContent = '~' + ahorroCol.toFixed(1).replace('.', ',') + ' m³/s';
@@ -704,41 +733,68 @@
       const kpiDate = document.getElementById('kpi-date');
       const kpiDropRate = document.getElementById('kpi-drop-rate');
 
-      let diasHastaColapso = Infinity;
-      if (cambioCotaDiarioMetros < -0.02) {
-        diasHastaColapso = colchonHoyMetros / Math.abs(cambioCotaDiarioMetros);
+      // Proyección día a día (paso de 6 h, 60 días) con la lluvia pronosticada en cada cuenca.
+      // Los caudales siguen el escenario elegido; Coca Codo y las otras hidroeléctricas crecen con la lluvia;
+      // el volumen por metro de Mazar cambia con la cota (curva cota–volumen).
+      const lluviaPaute = document.getElementById('input-lluvia-paute').value;
+      const lluviaCoca = document.getElementById('input-lluvia-coca').value;
+      const perfilCaudal = (tipo, t, q0, objetivo) => {
+        if (tipo === 'seco') return q0 * Math.max(0.7, 1 - 0.01 * t);
+        if (tipo === 'inamhi') { const b0 = Math.exp(-1.6); return q0 * (1 + 0.45 * Math.max(0, Math.exp(-((t - 2) ** 2) / 2.5) - b0) / (1 - b0)); }
+        return q0 + (objetivo - q0) * (1 - Math.exp(-t / 7));
+      };
+      const areaCota = c => 3.758 + 0.2177 * (c - COTA_CRITICA_SEGURA);
+      const termicaDia = DATOS_OFICIALES_DIA.termica_mw, otrasDia = DATOS_OFICIALES_DIA.otras_hidro_mw;
+      const firmeSeparable = termicaDia != null && otrasDia != null && Math.abs(GENERACION_INTERNA_BASE_SNI - (termicaDia + otrasDia)) < 5;
+      function proyectar(importMW) {
+        const dt = 0.25;
+        let c = cotaHoy, cruce = null;
+        const serie = [c];
+        for (let s = 1; s <= 60 / dt; s++) {
+          const t = (s - 1) * dt;
+          const qM = perfilCaudal(lluviaPaute, t, qMazar, 66);
+          const qC = perfilCaudal(lluviaCoca, t, qCoca, 280);
+          const rf = Math.min(1.35, Math.max(0.8, (qM / qMazar + qC / qCoca) / 2));
+          const ccsT = Math.min(1350, ccsMW * qC / qCoca);
+          const firme = firmeSeparable ? termicaDia + otrasDia * rf : GENERACION_INTERNA_BASE_SNI;
+          const paute = Math.max(200, Math.min(1757, demandaNetaAtender - firme - ccsT - importMW));
+          const cAntes = c;
+          c = Math.min(COTA_MAXIMA_MAZAR, c + ((qM - paute / K_PAUTE) * 86400 * dt / 1e6) / areaCota(c));
+          if (cruce === null && c <= COTA_CRITICA_SEGURA) cruce = (s - 1) * dt + dt * (cAntes - COTA_CRITICA_SEGURA) / (cAntes - c);
+          if (s % 4 === 0) serie.push(c);
+        }
+        return { serie, cruce };
       }
-
-      let diasSinColombia = Infinity;
-      if (cambioCotaSinColMetros < -0.02) {
-        diasSinColombia = colchonHoyMetros / Math.abs(cambioCotaSinColMetros);
-      }
+      const proyCon = proyectar(importColombiaMW);
+      const proySin = proyectar(0);
+      let diasHastaColapso = proyCon.cruce === null ? Infinity : proyCon.cruce;
+      let diasSinColombia = proySin.cruce === null ? Infinity : proySin.cruce;
 
       const serieConColombia = [];
       const serieSinColombia = [];
       for (let d = 0; d < fechasProyeccion.length; d++) {
-        const cotaCon = Math.max(2111.5, Math.min(2129.0, cotaHoy + cambioCotaDiarioMetros * d));
-        const cotaSin = Math.max(2111.5, Math.min(2129.0, cotaHoy + cambioCotaSinColMetros * d));
-        serieConColombia.push(cotaCon);
-        serieSinColombia.push(cotaSin);
+        serieConColombia.push(Math.max(2111.5, Math.min(2129.0, proyCon.serie[d])));
+        serieSinColombia.push(Math.max(2111.5, Math.min(2129.0, proySin.serie[d])));
       }
 
       chartInstance.data.datasets[0].data = serieConColombia;
       chartInstance.data.datasets[1].data = serieSinColombia;
       chartInstance.update();
 
-      if (cambioCotaDiarioMetros >= -0.02) {
-        kpiDays.textContent = 'Estable / Sube';
+      if (!isFinite(diasHastaColapso)) {
+        kpiDays.textContent = 'Más de 60 días';
         kpiDays.className = 'text-2xl md:text-3xl font-extrabold mono text-emerald-400';
-        kpiDate.innerHTML = 'Embalse en recuperación: <span class="text-emerald-300">No toca 2.115 m</span>';
-        kpiDropRate.textContent = `Ritmo: +${Math.abs(cambioCotaDiarioMetros).toFixed(2)} m/día (+${Math.abs(cambioVolumenDiarioHM3).toFixed(1)} HM³/día)`;
+        kpiDate.innerHTML = 'Con este escenario: <span class="text-emerald-300">no toca 2.115 m en 60 días</span>';
+        kpiDropRate.textContent = `Ritmo hoy: ${cambioCotaDiarioMetros >= 0 ? '+' : ''}${cambioCotaDiarioMetros.toFixed(2)} m/día (${cambioVolumenDiarioHM3.toFixed(1)} HM³/día)`;
         kpiDropRate.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 mono';
       } else {
         const diasRedondeados = Math.max(1.0, diasHastaColapso);
         kpiDays.textContent = diasRedondeados.toFixed(1) + ' días';
 
         const indiceDiaColapso = Math.min(fechasProyeccion.length - 1, Math.round(diasRedondeados));
-        const textoFechaColapso = diasRedondeados <= 20 ? fechasProyeccion[indiceDiaColapso] : 'Más de 20 días';
+        const mesesCorto = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const fechaColapso = new Date(); fechaColapso.setDate(fechaColapso.getDate() + Math.round(diasRedondeados));
+        const textoFechaColapso = diasRedondeados <= 20 ? fechasProyeccion[indiceDiaColapso] : `${String(fechaColapso.getDate()).padStart(2, '0')} ${mesesCorto[fechaColapso.getMonth()]}`;
 
         if (diasRedondeados <= 7) {
           kpiDays.className = 'text-3xl md:text-4xl font-extrabold mono text-rose-500';
@@ -749,7 +805,7 @@
         }
 
         kpiDate.innerHTML = `Toca 2.115 m el: <span class="text-white font-bold">${textoFechaColapso}</span>`;
-        kpiDropRate.textContent = `Ritmo: ${cambioCotaDiarioMetros.toFixed(2)} m/día (${cambioVolumenDiarioHM3.toFixed(1)} HM³/día)`;
+        kpiDropRate.textContent = `Ritmo hoy: ${cambioCotaDiarioMetros.toFixed(2)} m/día (${cambioVolumenDiarioHM3.toFixed(1)} HM³/día) · con lluvia prevista`;
         kpiDropRate.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 mono';
       }
 
