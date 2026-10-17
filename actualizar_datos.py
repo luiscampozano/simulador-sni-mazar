@@ -58,10 +58,9 @@ try:
         match_imp = re.search(r"IMPORTACI[ÓO]N[^\d]{1,100}?(\d{1,4})", html, re.IGNORECASE)
         if match_imp:
             imp_val = int(match_imp.group(1).strip())
-            # Si el valor acumulado reporta flujo activo y es compatible con MW o MWh
-            if 0 <= imp_val <= 500:
-                importacion_cenace_mw = imp_val
-                print(f"Importación reportada en portal CENACE: {importacion_cenace_mw}")
+            # Si CENACE reporta menos de 5 MWh, la importación comercial real es 0 MW
+            importacion_cenace_mw = imp_val if imp_val >= 5 else 0
+            print(f"Importación reportada en portal CENACE: {importacion_cenace_mw} MW")
 except Exception as e:
     print(f"Aviso CENACE: No disponible en este ciclo ({e}). Se conserva valor previo.")
 
@@ -77,7 +76,7 @@ if temp_max_gye is not None:
     datos_actuales["temp_costa_c"] = temp_max_gye
 if demanda_cenace_mw is not None:
     datos_actuales["demanda_base_mw"] = demanda_cenace_mw
-if importacion_cenace_mw is not None and importacion_cenace_mw > 5:
+if importacion_cenace_mw is not None:
     datos_actuales["importacion_colombia_mw"] = importacion_cenace_mw
 
 # 6. Guardar en datos_sni.json
