@@ -472,7 +472,7 @@
     const COTA_MAXIMA_MAZAR = 2153.00;
     const COTA_CRITICA_SEGURA = 2115.00;
     let HM3_POR_METRO_COTA_BAJA = 6.8;   // se reemplaza con datos_sni.json → hm3_por_metro
-    const GENERACION_INTERNA_BASE_SNI = 2500;
+    let GENERACION_INTERNA_BASE_SNI = 2500;   // térmica + renovable + otras hidro; se reemplaza con datos_sni.json → generacion_firme_mw (Cenace)
     // MW que genera Paute por cada m³/s que sale de Mazar; se reemplaza con datos_sni.json → k_mw_por_m3s
     // (calculado con la energía real de Mazar, Molino y Sopladora y la variación de la cota, Celec Sur)
     let K_PAUTE = 13.0;
@@ -585,6 +585,7 @@
         const data = await res.json();
         DATOS_OFICIALES_DIA = { ...DATOS_OFICIALES_DIA, ...data };
         if (DATOS_OFICIALES_DIA.k_mw_por_m3s) K_PAUTE = DATOS_OFICIALES_DIA.k_mw_por_m3s;
+        if (DATOS_OFICIALES_DIA.generacion_firme_mw) GENERACION_INTERNA_BASE_SNI = DATOS_OFICIALES_DIA.generacion_firme_mw;
         if (DATOS_OFICIALES_DIA.hm3_por_metro) HM3_POR_METRO_COTA_BAJA = DATOS_OFICIALES_DIA.hm3_por_metro;
         const ahorroCol = 100 / K_PAUTE;
         const elA = document.getElementById('txt-ahorro-col'); if (elA) elA.textContent = '~' + ahorroCol.toFixed(1).replace('.', ',') + ' m³/s';
@@ -672,6 +673,14 @@
         sedimentBadge.className = 'mt-1.5 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30';
       } else {
         sedimentBadge.textContent = 'Sedimentos Río Coca: Operación Normal';
+        sedimentBadge.className = 'mt-1.5 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20';
+      }
+
+      // Si el caudal del Coca es el del día, se usa la generación de Coca Codo medida por Cenace
+      if (DATOS_OFICIALES_DIA.coca_codo_mw && Math.abs(qCoca - DATOS_OFICIALES_DIA.caudal_coca) < 0.6) {
+        ccsMW = DATOS_OFICIALES_DIA.coca_codo_mw;
+        alertaSedimentos = false;
+        sedimentBadge.textContent = 'Generación medida por Cenace: ' + ccsMW + ' MW';
         sedimentBadge.className = 'mt-1.5 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20';
       }
 

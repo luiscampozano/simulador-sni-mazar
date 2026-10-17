@@ -100,32 +100,125 @@ try:
 except Exception as e:
     print(f"Aviso Open-Meteo Clima: {e}")
 
-# 5. Consultar Portal CENACE (Demanda SNI e Importación de Colombia)
-try:
-    url_cenace = "https://www.cenace.gob.ec/info-operativa/InformacionOperativa.htm"
-    req_cenace = urllib.request.Request(url_cenace, headers={
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-    })
-    with urllib.request.urlopen(req_cenace, timeout=15) as resp:
-        html = resp.read().decode("utf-8", errors="ignore")
-        
-        # Demanda nacional
-        match_dem = re.search(r"DEMANDA\s*TOTAL[^\d]{1,100}?(\d{1,2}[\s\.]?\d{3})", html, re.IGNORECASE)
-        if match_dem:
-            d_str = match_dem.group(1).replace(" ", "").replace(".", "").strip()
-            if d_str.isdigit() and 2500 <= int(d_str) <= 6000:
-                datos["demanda_base_mw"] = int(d_str)
-                print(f"Demanda CENACE: {datos['demanda_base_mw']} MW")
-        
-        # Importación de Colombia
-        match_imp = re.search(r"IMPORTACI[ÓO]N[^\d]{1,100}?(\d{1,4})", html, re.IGNORECASE)
-        if match_imp:
-            imp_val = int(match_imp.group(1).strip())
-            datos["importacion_colombia_mw"] = imp_val if imp_val >= 5 else 0
-            print(f"Importación Colombia (CENACE): {datos['importacion_colombia_mw']} MW")
-except Exception as e:
-    print(f"Aviso CENACE: {e}")
+# 5. CENACE (página "Información Operativa"): generación real cada media hora
+#    Térmica, renovable, importación desde Colombia, demanda atendida, hidráulica total y energía por central.
+#    El servidor de Cenace no envía su certificado intermedio (Sectigo DV R36): se descarga desde la dirección
+#    que indica el propio certificado y se agrega a la lista de confianza, sin desactivar la verificación.
+import ssl, base64, struct, math, html as htmllib
 
+INTERMEDIO_CENACE = "http://crt.sectigo.com/SectigoPublicServerAuthenticationCADVR36.crt"
+MESES_LARGO = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
+               "septiembre", "octubre", "noviembre", "diciembre"]
+_FMT = {"f8": "d", "f4": "f", "i1": "b", "u1": "B", "i2": "h", "u2": "H", "i4": "i", "u4": "I"}
+_CLAVE = {"Hidráulica": "h", "Térmica": "t", "Importación": "i", "Renovable": "r",
+          "Exportación": "e", "DEMANDA NACIONAL": "d"}
+
+
+def _contexto_cenace():
+    ctx = ssl.create_default_context()
+    der = urllib.request.urlopen(INTERMEDIO_CENACE, timeout=30).read()
+    ctx.load_verify_locations(cadata=ssl.DER_cert_to_PEM_cert(der))
+    return ctx
+
+
+def _plotly_y(y):
+    if isinstance(y, dict) and "bdata" in y:
+        dt = y.get("dtype", "f8").lstrip("<|")
+        raw = base64.b64decode(y["bdata"])
+        n = len(raw) // struct.calcsize(_FMT[dt])
+        vals = struct.unpack("<" + _FMT[dt] * n, raw)
+    else:
+        vals = y
+    return [None if (v is None or (isinstance(v, float) and math.isnan(v))) else float(v) for v in vals]
+
+
+def _filas(curva):
+    series = {tr["name"]: _plotly_y(tr["y"]) for tr in curva}
+    out = {}
+    for k, hh in enumerate(curva[0]["x"]):
+        fila = {}
+        for nombre, c in _CLAVE.items():
+            arr = series.get(nombre)
+            if arr is None or k >= len(arr) or arr[k] is None:
+                fila = None
+                break
+            fila[c] = arr[k]
+        if fila and fila["d"] > 1000:
+            out[hh] = fila
+    return out
+
+
+def _fecha_bloque(texto, titulo):
+    m = re.search(titulo + r" \w+, (\d{1,2}) de (\w+) de (\d{4})", texto)
+    if not m:
+        return None
+    return datetime(int(m.group(3)), MESES_LARGO.index(m.group(2).lower()) + 1, int(m.group(1))).date()
+
+
+try:
+    req_cenace = urllib.request.Request("https://www.cenace.gob.ec/info-operativa/InformacionOperativa.htm",
+                                        headers={"User-Agent": "Mozilla/5.0 (MonitorSNI)"})
+    with urllib.request.urlopen(req_cenace, timeout=40, context=_contexto_cenace()) as resp:
+        page = resp.read().decode("utf-8", errors="replace")
+    texto = re.sub(r"\s+", " ", htmllib.unescape(re.sub(r"<[^>]+>", " ", re.sub(r"<script.*?</script>", " ", page, flags=re.S))))
+    fecha_rt = _fecha_bloque(texto, "PRODUCCIÓN EN TIEMPO REAL")
+    fecha_perfil = _fecha_bloque(texto, "INFORMACIÓN OPERATIVA DIARIA")
+    if fecha_rt != ahora.date():
+        raise ValueError(f"la página de Cenace muestra el {fecha_rt}, no hoy")
+    dec = json.JSONDecoder()
+    plots = []
+    for mm in re.finditer(r'Plotly\.newPlot\(\s*"[^"]+",\s*', page):
+        plots.append(dec.raw_decode(page, mm.end())[0])
+    curvas = [p for p in plots if any(tr.get("name") == "DEMANDA NACIONAL" for tr in p)]
+    tortas = [p for p in plots if any("HIDROELÉCTRICA" in (tr.get("labels") or []) for tr in p)]
+    barras = [p for p in plots if any(tr.get("name") == "Coca Codo" for tr in p)]
+    hoy_f = _filas(curvas[0])
+    perfil = _filas(curvas[1]) if len(curvas) > 1 else {}
+    if len(hoy_f) < 8:
+        raise ValueError(f"solo {len(hoy_f)} medias horas de hoy")
+
+    # Promedios de las últimas 24 h; las medias horas de ayer se toman del último día completo publicado
+    ultimo = datetime.combine(fecha_rt, datetime.strptime(max(hoy_f), "%H:%M").time())
+    ventana = []
+    for k in range(48):
+        ts = ultimo - timedelta(minutes=30 * k)
+        hh = ts.strftime("%H:%M")
+        if ts.date() == fecha_rt and hh in hoy_f:
+            ventana.append(hoy_f[hh])
+        elif hh in perfil:
+            ventana.append(perfil[hh])
+    prom = {c: sum(f[c] for f in ventana) / len(ventana) for c in "htirde"}
+
+    def _energia(i):
+        tr = tortas[i][0]
+        e = {"hidro": float(tr["values"][tr["labels"].index("HIDROELÉCTRICA")])}
+        e.update({t["name"].strip(): float(t["y"][0]) for t in barras[i] if isinstance(t.get("y"), list) and t["y"]})
+        return e
+
+    horas_hoy = len(hoy_f) / 2.0
+    e_hoy = _energia(0)
+    e_dia = _energia(1) if len(tortas) > 1 and len(barras) > 1 else None
+    # Coca Codo: lo generado hoy (si ya hay 4 h); otras hidro: hoy si hay 12 h, si no, el último día completo
+    ccs_mw = e_hoy.get("Coca Codo", 0) / horas_hoy if horas_hoy >= 4 else (e_dia or {}).get("Coca Codo", 0) / 24
+    base_e, base_h = (e_hoy, horas_hoy) if (horas_hoy >= 12 or not e_dia) else (e_dia, 24.0)
+    paute_e = sum(base_e.get(k, 0.0) for k in ("Paute", "Sopladora", "Mazar"))
+    otras_mw = (base_e["hidro"] - base_e.get("Coca Codo", 0.0) - paute_e) / base_h
+
+    datos["importacion_colombia_mw"] = int(round(prom["i"]))
+    datos["demanda_atendida_mw"] = int(round(prom["d"]))
+    datos["coca_codo_mw"] = int(round(ccs_mw))
+    datos["caudal_coca"] = round(ccs_mw / 4.79, 1)   # caudal equivalente con la fórmula de la página
+    datos["caudal_coca_fuente"] = "Cenace (generación medida de Coca Codo)"
+    datos["termica_mw"] = int(round(prom["t"] + prom["r"]))
+    datos["otras_hidro_mw"] = int(round(otras_mw))
+    datos["generacion_firme_mw"] = int(round(prom["t"] + prom["r"] + otras_mw))
+    datos["cenace_ok"] = True
+    print(f"CENACE: demanda {prom['d']:.0f} MW, térmica {prom['t']:.0f} + renovable {prom['r']:.0f}, "
+          f"importación {prom['i']:.0f}, Coca Codo {ccs_mw:.0f}, otras hidro {otras_mw:.0f} MW "
+          f"(perfil completado con {fecha_perfil})")
+except Exception as e:
+    datos["cenace_ok"] = False
+    print(f"Aviso CENACE: {e}. Se conservan valores previos.")
 
 # ---------------------------------------------------------------- Física de Paute (Celec Sur)
 # Cuánto baja Mazar por cada MW que genera el complejo Paute no es un número fijo: Molino y
@@ -197,16 +290,25 @@ try:
     datos["fisica_periodo"] = f"{fis['desde']} a {fis['hasta']}"
     cota_act = float(datos.get("cota_mazar", 2123.0))
     datos["hm3_por_metro"] = round(3.758 + 0.2177 * (cota_act - 2115), 2)
-    qc = float(datos.get("caudal_coca", 170))
-    ccs = min(1350, round(qc * 4.79))
-    if qc >= 245:
-        ccs = round(ccs * 0.52)
-    elif qc >= 220:
-        ccs = round(ccs * 0.85)
+    if datos.get("coca_codo_mw"):
+        ccs = float(datos["coca_codo_mw"])
+    else:
+        qc = float(datos.get("caudal_coca", 170))
+        ccs = min(1350, round(qc * 4.79))
+        if qc >= 245:
+            ccs = round(ccs * 0.52)
+        elif qc >= 220:
+            ccs = round(ccs * 0.85)
+    firme = float(datos.get("generacion_firme_mw", 2500))
     ac = max(0, round((float(datos.get("temp_costa_c", 30)) - 28.0) * 49))
     imp = float(datos.get("importacion_colombia_mw", 0))
     cortes = float(datos.get("cortes_mw", 0))
-    datos["demanda_base_mw"] = int(round((fis["paute_prom_mw"] + 2500 + ccs + imp + cortes - ac) / 5) * 5)
+    datos["demanda_base_mw"] = int(round((fis["paute_prom_mw"] + firme + ccs + imp + cortes - ac) / 5) * 5)
+    # Cotas de Amaluza y Sopladora (Celec Sur)
+    for clave, mrid in (("cota_amaluza", 24019), ("cota_sopladora", 90919)):
+        pts = _celec_puntos(mrid, ahora.date()) or _celec_puntos(mrid, ahora.date() - timedelta(days=1))
+        if pts:
+            datos[clave] = round(pts[-1][1], 2)
     print(f"Física Paute (Celec Sur): {datos['k_mw_por_m3s']} MW por m³/s, Paute 7 días {datos['paute_7d_mw']} MW, "
           f"{datos['hm3_por_metro']} hm³ por metro; demanda base equivalente {datos['demanda_base_mw']} MW")
 except Exception as e:
@@ -230,5 +332,7 @@ print(f"- Caudal Mazar: {datos.get('caudal_mazar')} m³/s")
 print(f"- Caudal Coca Codo: {datos.get('caudal_coca')} m³/s")
 print(f"- Colombia: {datos.get('importacion_colombia_mw')} MW")
 print(f"- Temp Guayaquil: {datos.get('temp_costa_c')} °C")
-print(f"- Demanda: {datos.get('demanda_base_mw')} MW")
+print(f"- Demanda base equivalente: {datos.get('demanda_base_mw')} MW (atendida medida: {datos.get('demanda_atendida_mw')} MW)")
+print(f"- Generación firme (térmica + renovable + otras hidro): {datos.get('generacion_firme_mw')} MW")
+print(f"- Factor Paute: {datos.get('k_mw_por_m3s')} MW por m³/s; Paute 7 días: {datos.get('paute_7d_mw')} MW")
 print(f"- Cortes Empresas: {datos.get('cortes_mw')} MW")
