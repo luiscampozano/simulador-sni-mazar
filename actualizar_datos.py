@@ -415,6 +415,8 @@ try:
         # Esta página calcula max(0, redondeo((T − 28)·49)) para el aire acondicionado (redondeo como JavaScript).
         ac_b = max(0, math.floor((T - 28.0) * 49 + 0.5))
         datos["demanda_base_mw"] = int(h["dBase"] + 50 * (T - 32) - ac_b)
+        # Modelo calibrado (curva, Amaluza, pronóstico de caudales, día de la semana, rango): el mismo de A
+        datos["modelo"] = A.get("modelo")
         datos["sincronizado_con"] = {"simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
                                      "datos_de": A["robot"]["ultima_ejecucion"], "cota_hora": A.get("fecha")}
         print(f"Sincronizado con el otro simulador (datos de {A['robot']['ultima_ejecucion']}, {edad_min:.0f} min).")
