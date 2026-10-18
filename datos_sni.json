@@ -1,34 +1,34 @@
 {
-  "fecha_reporte": "SÁBADO 17 OCT 2026 (17h35)",
-  "cota_mazar": 2123.6,
-  "caida_24h": 0.31,
-  "caudal_mazar": 33.43,
-  "caudal_coca": 174.0,
+  "fecha_reporte": "SÁBADO 17 OCT 2026 (19h52)",
+  "cota_mazar": 2123.46,
+  "caida_24h": 0.12,
+  "caudal_mazar": 31.88,
+  "caudal_coca": 172.5,
   "importacion_colombia_mw": 1,
-  "temp_costa_c": 32.7,
-  "demanda_base_mw": 4425,
+  "temp_costa_c": 31.9,
+  "demanda_base_mw": 4455,
   "cortes_mw": 280,
-  "cota_amaluza": 1970.39,
-  "cota_sopladora": 1315.37,
+  "cota_amaluza": 1970.76,
+  "cota_sopladora": 1316.14,
   "k_mw_por_m3s": 12.74,
   "paute_7d_mw": 936,
   "fisica_periodo": "2026-10-07 a 2026-10-16",
-  "hm3_por_metro": 5.63,
-  "demanda_atendida_mw": 4058,
-  "coca_codo_mw": 833,
+  "hm3_por_metro": 5.6,
+  "demanda_atendida_mw": 4066,
+  "coca_codo_mw": 826,
   "caudal_coca_fuente": "Cenace (generación medida de Coca Codo)",
-  "termica_mw": 1288,
-  "otras_hidro_mw": 1314,
-  "generacion_firme_mw": 2603,
+  "termica_mw": 1292,
+  "otras_hidro_mw": 1312,
+  "generacion_firme_mw": 2604,
   "cenace_ok": true,
   "lluvia_paute": "inamhi",
   "lluvia_paute_mm": {
     "ultimos_7d": 23,
-    "proximos_7d": 79
+    "proximos_7d": 47
   },
   "lluvia_coca": "inamhi",
   "lluvia_coca_mm": {
     "ultimos_7d": 85,
-    "proximos_7d": 68
+    "proximos_7d": 67
   }
 }
