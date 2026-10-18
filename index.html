@@ -154,15 +154,15 @@
 
       <!-- Tarjeta 4: Riesgo de Apagón Residencial y Alivio Colombiano -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Cortes y aporte de Colombia</div>
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Cortes si Mazar llega a 2.115 m</div>
         <div class="mt-2 flex items-baseline gap-2">
-          <span id="kpi-blackout-hours" class="text-3xl md:text-4xl font-extrabold mono text-amber-400">3 a 4 h/día</span>
+          <span id="kpi-blackout-hours" class="text-3xl md:text-4xl font-extrabold mono text-amber-400">–</span>
         </div>
         <div id="kpi-blackout-status" class="mt-1 text-xs font-semibold text-amber-300">
           Calculando…
         </div>
         <div id="kpi-colombia-saved" class="mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-yellow-500/10 text-yellow-300 border border-yellow-500/20">
-          🇨🇴 Colombia aporta +3,4 días de margen a Mazar
+          Calculando aporte de Colombia…
         </div>
       </div>
     </section>
@@ -857,35 +857,42 @@
       document.getElementById('kpi-col-mw').textContent = '+' + importColombiaMW + ' MW';
       document.getElementById('kpi-paute-req').innerHTML = `Exigencia a Paute-Mazar: <strong class="text-amber-300 mono">${cargaExigidaPauteMW} MW</strong> (<span class="mono">${qTurbinadoPaute} m³/s</span>)`;
 
+      // Tarjeta 4: cortes si Mazar llega a 2.115 m y aporte de Colombia (modelo compartido)
       const kpiColSaved = document.getElementById('kpi-colombia-saved');
-      if (importColombiaMW === 0) {
-        kpiColSaved.textContent = 'Sin importación de Colombia (0 días adicionales)';
-        kpiColSaved.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-rose-500/15 text-rose-300 border border-rose-500/30';
-      } else if (!isFinite(diasHastaColapso)) {
-        kpiColSaved.textContent = `🇨🇴 Con ${importColombiaMW} MW de Colombia se evita el vaciado`;
-        kpiColSaved.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
-      } else {
-        const diasGanados = Math.max(0, diasHastaColapso - diasSinColombia);
-        kpiColSaved.textContent = `🇨🇴 Colombia (${importColombiaMW} MW) da +${diasGanados.toFixed(1)} días de margen`;
-        kpiColSaved.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-yellow-500/15 text-yellow-300 border border-yellow-500/30';
-      }
-
       const kpiBlackoutHours = document.getElementById('kpi-blackout-hours');
       const kpiBlackoutStatus = document.getElementById('kpi-blackout-status');
-
-      if (deficitRealMW >= -40) {
-        kpiBlackoutHours.textContent = '0 h/día';
+      const Rc = proyCon.R;
+      if (Rc.crossDay === null) {
+        kpiBlackoutHours.textContent = 'No llega';
         kpiBlackoutHours.className = 'text-3xl md:text-4xl font-extrabold mono text-emerald-400';
-        kpiBlackoutStatus.textContent = 'Suministro equilibrado sin drenar Mazar';
-        kpiBlackoutStatus.className = 'mt-1 text-xs font-semibold text-emerald-300';
+        kpiBlackoutStatus.textContent = 'Con este escenario Mazar no toca 2.115 m en 60 días, así que no harían falta cortes por Mazar.';
+        kpiBlackoutStatus.className = 'mt-1 text-xs font-semibold text-emerald-300 leading-snug';
       } else {
-        const horasEstimadas = Math.min(12, Math.max(2, Math.round(Math.abs(deficitRealMW) / 110)));
-        kpiBlackoutHours.textContent = `${horasEstimadas} a ${horasEstimadas + 1} h/día`;
-        kpiBlackoutHours.className = 'text-3xl md:text-4xl font-extrabold mono text-amber-400';
-        kpiBlackoutStatus.textContent = diasHastaColapso <= 9
-          ? `⚠️ Posibles cortes residenciales en ${diasHastaColapso.toFixed(0)} días`
-          : `Déficit cubierto hoy gastando agua de Mazar + Colombia`;
-        kpiBlackoutStatus.className = 'mt-1 text-xs font-semibold text-amber-300';
+        const tras = Rc.daily.filter(r => r.t > Rc.crossDay && r.t <= Rc.crossDay + 7);
+        const def = tras.length ? tras.reduce((s, r) => s + r.deficit, 0) / tras.length : 0;
+        const dem = tras.length ? tras.reduce((s, r) => s + r.demand, 0) / tras.length : demandaNetaAtender;
+        const horas = def / dem * 24;
+        const f = new Date(); f.setDate(f.getDate() + Math.round(Rc.crossDay));
+        const mes = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][f.getMonth()];
+        kpiBlackoutHours.textContent = horas < 0.5 ? 'Menos de 1 h/día' : `≈ ${Math.round(horas)} h/día`;
+        kpiBlackoutHours.className = 'text-3xl md:text-4xl font-extrabold mono ' + (horas >= 4 ? 'text-rose-400' : 'text-amber-400');
+        kpiBlackoutStatus.textContent = `Desde el ${f.getDate()} de ${mes}, Paute solo podría usar el agua que trae el río: faltarían ≈ ${Math.round(def)} MW, como ${Math.round(horas)} h de corte al día para todo el país. Hoy ese hueco se cubre vaciando Mazar.`;
+        kpiBlackoutStatus.className = 'mt-1 text-xs font-semibold text-amber-300 leading-snug';
+      }
+      // Aporte de Colombia: días que gana Mazar con la importación actual y con 300 MW
+      const con300 = proyectar(300).cruce;
+      const fmtD = d => d === null ? 'más de 60' : Math.round(d);
+      if (importColombiaMW < 20) {
+        const gan = (Rc.crossDay !== null) ? (con300 === null ? null : con300 - Rc.crossDay) : null;
+        kpiColSaved.textContent = `🇨🇴 Colombia hoy: ${importColombiaMW} MW, casi nada. ` + (Rc.crossDay === null ? '' :
+          (gan === null ? 'Con 300 MW Mazar no llegaría al mínimo en 60 días.' : `Con 300 MW, Mazar aguantaría ≈ ${Math.round(gan)} días más (${fmtD(con300)} en total).`));
+        kpiColSaved.className = 'mt-2 inline-block px-2 py-1 rounded text-[11px] font-medium leading-snug bg-rose-500/10 text-rose-200 border border-rose-500/25';
+      } else {
+        const gan = (diasSinColombia !== Infinity && isFinite(diasHastaColapso)) ? diasHastaColapso - diasSinColombia : null;
+        kpiColSaved.textContent = !isFinite(diasHastaColapso)
+          ? `🇨🇴 Con ${importColombiaMW} MW de Colombia, Mazar no llega al mínimo en 60 días.`
+          : `🇨🇴 Colombia (${importColombiaMW} MW) le da a Mazar ≈ ${Math.max(0, Math.round(gan || 0))} días más.`;
+        kpiColSaved.className = 'mt-2 inline-block px-2 py-1 rounded text-[11px] font-medium leading-snug bg-yellow-500/15 text-yellow-200 border border-yellow-500/30';
       }
 
       // Actualizar barras de progreso
