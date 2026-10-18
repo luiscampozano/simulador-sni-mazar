@@ -1,25 +1,25 @@
 {
-  "fecha_reporte": "DOMINGO 18 OCT 2026 (15h37)",
-  "cota_mazar": 2123.09,
-  "caida_24h": -0.71,
+  "fecha_reporte": "DOMINGO 18 OCT 2026 (17h36)",
+  "cota_mazar": 2123.03,
+  "caida_24h": -0.65,
   "caudal_mazar": 26.0,
-  "caudal_coca": 158.0,
+  "caudal_coca": 155.0,
   "importacion_colombia_mw": 5,
   "temp_costa_c": 33.0,
-  "demanda_base_mw": 4245,
+  "demanda_base_mw": 4235,
   "cortes_mw": 300,
-  "cota_amaluza": 1971.53,
-  "cota_sopladora": 1314.91,
+  "cota_amaluza": 1971.09,
+  "cota_sopladora": 1315.01,
   "k_mw_por_m3s": 13.1,
   "paute_7d_mw": 864,
   "fisica_periodo": "2026-10-08 a 2026-10-17",
-  "hm3_por_metro": 5.52,
-  "demanda_atendida_mw": 4040,
-  "coca_codo_mw": 790,
+  "hm3_por_metro": 5.51,
+  "demanda_atendida_mw": 4043,
+  "coca_codo_mw": 775,
   "caudal_coca_fuente": "Cenace (generación medida de Coca Codo)",
   "termica_mw": 1300,
-  "otras_hidro_mw": 1230,
-  "generacion_firme_mw": 2530,
+  "otras_hidro_mw": 1240,
+  "generacion_firme_mw": 2540,
   "cenace_ok": true,
   "lluvia_paute": "auto",
   "lluvia_paute_mm": {
@@ -33,8 +33,8 @@
   },
   "sincronizado_con": {
     "simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
-    "datos_de": "2026-10-18T15:39-05:00",
-    "cota_hora": "2026-10-18T15:00:00-05:00"
+    "datos_de": "2026-10-18T17:39-05:00",
+    "cota_hora": "2026-10-18T17:00:00-05:00"
   },
   "modelo": {
     "curva_mazar": {
@@ -189,9 +189,9 @@
       ]
     },
     "rango_base": "caudal bajo",
-    "amaluzaCota": 1971.53,
-    "amaluzaRitmo": 1.02,
-    "amaluzaVolumen": 0.03,
+    "amaluzaCota": 1971.09,
+    "amaluzaRitmo": 1.025,
+    "amaluzaVolumen": 0.0,
     "deltaDia": [
       -212.5,
       -5.0,
@@ -393,12 +393,12 @@
     ],
     "serie_fecha": "2026-10-18",
     "prediccion": {
-      "dias": 19.4,
+      "dias": 19.7,
       "rango": [
-        9.8,
-        28.6
+        9.9,
+        29.1
       ],
-      "ritmo_hoy_m_dia": -0.41
+      "ritmo_hoy_m_dia": -0.42
     },
     "probabilidades": {
       "pronostico": {
