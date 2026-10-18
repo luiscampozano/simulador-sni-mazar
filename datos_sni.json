@@ -1,5 +1,5 @@
 {
-  "fecha_reporte": "SÁBADO 17 OCT 2026 (23h12)",
+  "fecha_reporte": "SÁBADO 17 OCT 2026 (23h40)",
   "cota_mazar": 2123.2,
   "caida_24h": -0.23,
   "caudal_mazar": 31.0,
@@ -14,7 +14,7 @@
   "paute_7d_mw": 936,
   "fisica_periodo": "2026-10-07 a 2026-10-16",
   "hm3_por_metro": 5.54,
-  "demanda_atendida_mw": 4123,
+  "demanda_atendida_mw": 4130,
   "coca_codo_mw": 835,
   "caudal_coca_fuente": "Cenace (generación medida de Coca Codo)",
   "termica_mw": 1300,
@@ -33,7 +33,7 @@
   },
   "sincronizado_con": {
     "simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
-    "datos_de": "2026-10-17T23:10-05:00",
+    "datos_de": "2026-10-17T23:43-05:00",
     "cota_hora": "2026-10-17T23:00:00-05:00"
   },
   "modelo": {
