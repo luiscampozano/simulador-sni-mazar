@@ -1,12 +1,12 @@
 {
-  "fecha_reporte": "SÁBADO 17 OCT 2026 (21h39)",
+  "fecha_reporte": "SÁBADO 17 OCT 2026 (21h48)",
   "cota_mazar": 2123.33,
   "caida_24h": -0.05,
   "caudal_mazar": 31.63,
   "caudal_coca": 174.3,
   "importacion_colombia_mw": 2,
   "temp_costa_c": 31.9,
-  "demanda_base_mw": 4465,
+  "demanda_base_mw": 4485,
   "cortes_mw": 300,
   "cota_amaluza": 1970.81,
   "cota_sopladora": 1315.9,
@@ -28,7 +28,7 @@
   },
   "lluvia_coca": "inamhi",
   "lluvia_coca_mm": {
-    "ultimos_7d": 86,
+    "ultimos_7d": 85,
     "proximos_7d": 67
   }
 }
