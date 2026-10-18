@@ -24,6 +24,8 @@ jobs:
 
       - name: Ejecutar script de actualización hidrológica y climática
         run: python actualizar_datos.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Guardar cambios en el sitio web
         run: |

@@ -182,7 +182,7 @@
             <label class="text-xs font-semibold text-sky-300">1. Caudal Cuenca Paute-Mazar (Lluvias Austro)</label>
             <span id="val-q-mazar" class="text-xs font-bold mono px-2 py-0.5 rounded bg-sky-500/15 text-sky-300">57.5 m³/s</span>
           </div>
-          <input id="input-q-mazar" type="range" min="15" max="140" step="0.5" value="57.5" class="w-full" oninput="updateSimulation()" />
+          <input id="input-q-mazar" type="range" min="5" max="140" step="0.5" value="57.5" class="w-full" oninput="updateSimulation()" />
           <div class="flex justify-between text-[10px] text-slate-400">
             <span>Sequía (20 m³/s)</span>
             <span id="lbl-q-mazar-ref" class="text-sky-300 font-medium">Reporte Hoy: 57,46 m³/s</span>
@@ -196,7 +196,7 @@
             <label class="text-xs font-semibold text-emerald-300">2. Caudal Río Coca (Coca Codo Sinclair)</label>
             <span id="val-q-coca" class="text-xs font-bold mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300">170 m³/s</span>
           </div>
-          <input id="input-q-coca" type="range" min="90" max="290" step="1" value="170" class="w-full slider-emerald" oninput="updateSimulation()" />
+          <input id="input-q-coca" type="range" min="80" max="450" step="1" value="170" class="w-full slider-emerald" oninput="updateSimulation()" />
           <div class="flex justify-between text-[10px] text-slate-400">
             <span>Estiaje (110 m³/s)</span>
             <span class="text-emerald-300 font-medium">Hoy (&lt;200 m³/s): ~170 m³/s</span>
@@ -236,7 +236,7 @@
             </label>
             <span id="val-import-col" class="text-xs font-bold mono px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300">250 MW</span>
           </div>
-          <input id="input-import-col" type="range" min="0" max="450" step="10" value="250" class="w-full slider-yellow" oninput="updateSimulation()" />
+          <input id="input-import-col" type="range" min="0" max="450" step="5" value="250" class="w-full slider-yellow" oninput="updateSimulation()" />
           <div class="flex justify-between text-[10px] text-slate-400">
             <span>Corte (0 MW)</span>
             <span class="text-yellow-300 font-medium">Despacho estimado (250 MW)</span>
@@ -264,7 +264,7 @@
             <label class="text-xs font-semibold text-purple-300">5. Demanda Nacional Base (Sin Clima Costa)</label>
             <span id="val-demanda-base" class="text-xs font-bold mono px-2 py-0.5 rounded bg-purple-500/15 text-purple-300">4.455 MW</span>
           </div>
-          <input id="input-demanda-base" type="range" min="4000" max="5000" step="25" value="4455" class="w-full slider-purple" oninput="updateSimulation()" />
+          <input id="input-demanda-base" type="range" min="3500" max="5300" step="1" value="4455" class="w-full slider-purple" oninput="updateSimulation()" />
           <div class="flex justify-between text-[10px] text-slate-400">
             <span>Valle/Media (4.200 MW)</span>
             <span>Demanda Base Hoy (4.455 MW)</span>
@@ -278,7 +278,7 @@
             <label class="text-xs font-semibold text-rose-300">6. Cortes a Empresas (MV/AV) y Racionamiento</label>
             <span id="val-cortes-mw" class="text-xs font-bold mono px-2 py-0.5 rounded bg-rose-500/15 text-rose-300">280 MW</span>
           </div>
-          <input id="input-cortes-mw" type="range" min="0" max="900" step="10" value="280" class="w-full slider-rose" oninput="updateSimulation()" />
+          <input id="input-cortes-mw" type="range" min="0" max="900" step="5" value="280" class="w-full slider-rose" oninput="updateSimulation()" />
           <div class="flex justify-between text-[10px] text-slate-400">
             <span>Sin cortes (0 MW)</span>
             <span class="text-rose-300 font-medium">Restricción Industrial Hoy (~280 MW)</span>
@@ -743,25 +743,37 @@
         if (tipo === 'inamhi') { const b0 = Math.exp(-1.6); return q0 * (1 + 0.45 * Math.max(0, Math.exp(-((t - 2) ** 2) / 2.5) - b0) / (1 - b0)); }
         return q0 + (objetivo - q0) * (1 - Math.exp(-t / 7));
       };
-      const areaCota = c => 3.758 + 0.2177 * (c - COTA_CRITICA_SEGURA);
       const termicaDia = DATOS_OFICIALES_DIA.termica_mw, otrasDia = DATOS_OFICIALES_DIA.otras_hidro_mw;
       const firmeSeparable = termicaDia != null && otrasDia != null && Math.abs(GENERACION_INTERNA_BASE_SNI - (termicaDia + otrasDia)) < 5;
+      // Mismo cálculo que el simulador "Mazar y generación": volumen sobre 2.115 con la curva cota–volumen,
+      // paso de 6 h, y Coca Codo = 5 MW por m³/s (tope 1.200 MW) cuando el caudal del Coca es el del día.
+      const CA = 3.758, CB = 0.2177;
+      const volOf = x => CA * x + CB * x * x / 2;
+      const xOf = v => v <= 0 ? 0 : (-CA + Math.sqrt(CA * CA + 2 * CB * v)) / CB;
+      const VMAX = volOf(COTA_MAXIMA_MAZAR - COTA_CRITICA_SEGURA);
+      const cocaDelDia = DATOS_OFICIALES_DIA.coca_codo_mw && Math.abs(qCoca - DATOS_OFICIALES_DIA.caudal_coca) < 0.6;
+      const ccsDe = q => cocaDelDia ? Math.min(5 * q, 1200) * (q > 450 ? 0.5 : 1) : Math.min(1200, ccsMW * q / qCoca);
       function proyectar(importMW) {
         const dt = 0.25;
-        let c = cotaHoy, cruce = null;
-        const serie = [c];
-        for (let s = 1; s <= 60 / dt; s++) {
-          const t = (s - 1) * dt;
+        let V = volOf(cotaHoy - COTA_CRITICA_SEGURA), cruce = null;
+        const serie = [];
+        for (let paso = 0; paso <= 60 / dt; paso++) {
+          const t = paso * dt;
+          if (Math.abs(t - Math.round(t)) < 1e-9) serie.push(COTA_CRITICA_SEGURA + xOf(V));
           const qM = perfilCaudal(lluviaPaute, t, qMazar, 66);
           const qC = perfilCaudal(lluviaCoca, t, qCoca, 280);
           const rf = Math.min(1.35, Math.max(0.8, (qM / qMazar + qC / qCoca) / 2));
-          const ccsT = Math.min(1350, ccsMW * qC / qCoca);
           const firme = firmeSeparable ? termicaDia + otrasDia * rf : GENERACION_INTERNA_BASE_SNI;
-          const paute = Math.max(200, Math.min(1757, demandaNetaAtender - firme - ccsT - importMW));
-          const cAntes = c;
-          c = Math.min(COTA_MAXIMA_MAZAR, c + ((qM - paute / K_PAUTE) * 86400 * dt / 1e6) / areaCota(c));
-          if (cruce === null && c <= COTA_CRITICA_SEGURA) cruce = (s - 1) * dt + dt * (cAntes - COTA_CRITICA_SEGURA) / (cAntes - c);
-          if (s % 4 === 0) serie.push(c);
+          const pedido = demandaNetaAtender - firme - ccsDe(qC) - importMW;
+          if (V > 0) {
+            const paute = Math.min(Math.max(pedido, 0), 1757);
+            const Vantes = V;
+            V = Math.min(VMAX, V + (qM - paute / K_PAUTE) * 86400 * dt / 1e6);
+            if (V <= 0 && cruce === null) { cruce = t + dt * (Vantes / (Vantes - V)); V = 0; }
+          } else {
+            const paute = Math.min(Math.max(pedido, 0), qM * K_PAUTE, 1757);
+            V += Math.max(0, qM - paute / K_PAUTE) * 86400 * dt / 1e6;
+          }
         }
         return { serie, cruce };
       }

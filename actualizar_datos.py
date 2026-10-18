@@ -350,6 +350,80 @@ try:
 except Exception as e:
     print(f"Aviso física Paute: {e}. Se conservan valores previos.")
 
+# 5c. Sincronización con el simulador "Mazar y generación" (luiscampozano/simulador-mazar).
+#     Para que ambos simuladores den exactamente el mismo resultado, se usan los mismos datos de partida
+#     que ya calculó su robot (corre a la misma hora). Si en una corrida programada su robot aún no
+#     terminó, se espera hasta ~12 minutos. Si sus datos tienen más de 3 h, se conservan los propios.
+def _json_api(url):
+    import os
+    h = {"User-Agent": "MonitorSNI-Sync/1.0", "Accept": "application/vnd.github+json"}
+    tok = os.environ.get("GITHUB_TOKEN")
+    if tok:
+        h["Authorization"] = f"Bearer {tok}"
+    with urllib.request.urlopen(urllib.request.Request(url, headers=h), timeout=30) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+def _datos_a():
+    import base64
+    c = _json_api("https://api.github.com/repos/luiscampozano/simulador-mazar/contents/datos.json?ref=main")
+    return json.loads(base64.b64decode(c["content"]).decode("utf-8"))
+
+def _a_en_curso():
+    for estado in ("in_progress", "queued"):
+        r = _json_api(f"https://api.github.com/repos/luiscampozano/simulador-mazar/actions/runs?status={estado}&per_page=5")
+        if r.get("total_count", 0) > 0:
+            return True
+    return False
+
+try:
+    import os, time, math
+    programada = os.environ.get("GITHUB_EVENT_NAME") == "schedule"
+    limite = time.time() + 12 * 60
+    while True:
+        A = _datos_a()
+        ult = datetime.fromisoformat(A["robot"]["ultima_ejecucion"])
+        edad_min = (datetime.now(EC) - ult).total_seconds() / 60
+        if edad_min <= 20 or time.time() > limite:
+            break
+        if not (programada or _a_en_curso()):
+            break
+        print(f"Esperando al robot del otro simulador (sus datos tienen {edad_min:.0f} min)...")
+        time.sleep(30)
+    if edad_min <= 180:
+        h = A["hoy"]
+        T = float(h["tCosta"])
+        datos["cota_mazar"] = float(A["cota"])
+        datos["caudal_mazar"] = float(h["qMazar"])
+        datos["caudal_coca"] = float(h["qCoca"])
+        ccs_a = min(5 * float(h["qCoca"]), 1200) * (0.5 if float(h["qCoca"]) > 450 else 1)
+        datos["coca_codo_mw"] = int(round(ccs_a))
+        datos["importacion_colombia_mw"] = int(h["imp"])
+        datos["termica_mw"] = int(h["therm"])
+        datos["otras_hidro_mw"] = int(h["other"])
+        datos["generacion_firme_mw"] = int(h["therm"]) + int(h["other"])
+        datos["temp_costa_c"] = T
+        datos["cortes_mw"] = int(h["cut"])
+        datos["lluvia_paute"] = h["wPaute"]
+        datos["lluvia_coca"] = h["wCoca"]
+        fa = A.get("fisica") or {}
+        if fa.get("k_mw_por_m3s"):
+            datos["k_mw_por_m3s"] = fa["k_mw_por_m3s"]
+            datos["paute_7d_mw"] = fa.get("paute_prom_mw", datos.get("paute_7d_mw"))
+            datos["fisica_periodo"] = f"{fa.get('desde')} a {fa.get('hasta')}"
+        datos["hm3_por_metro"] = round(3.758 + 0.2177 * (datos["cota_mazar"] - 2115), 2)
+        # Misma demanda neta que el otro simulador: dBase + 50·(T − 32) − cortes.
+        # Esta página calcula max(0, redondeo((T − 28)·49)) para el aire acondicionado (redondeo como JavaScript).
+        ac_b = max(0, math.floor((T - 28.0) * 49 + 0.5))
+        datos["demanda_base_mw"] = int(h["dBase"] + 50 * (T - 32) - ac_b)
+        datos["sincronizado_con"] = {"simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
+                                     "datos_de": A["robot"]["ultima_ejecucion"], "cota_hora": A.get("fecha")}
+        print(f"Sincronizado con el otro simulador (datos de {A['robot']['ultima_ejecucion']}, {edad_min:.0f} min).")
+    else:
+        datos["sincronizado_con"] = None
+        print(f"Los datos del otro simulador tienen {edad_min:.0f} min; se conservan los propios.")
+except Exception as e:
+    print(f"Aviso sincronización: {e}. Se conservan los valores propios.")
+
 # 6. Actualizar fecha y hora del reporte
 meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
 dias_semana = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"]
