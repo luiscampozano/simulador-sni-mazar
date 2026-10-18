@@ -111,6 +111,7 @@
         <div id="kpi-date" class="mt-1 text-xs font-semibold text-slate-300">
           Fecha estimada límite: <span class="text-white">27 de octubre</span>
         </div>
+        <div id="kpi-zona" class="mt-1 text-xs font-semibold text-amber-300 leading-snug"></div>
         <div id="kpi-range" class="mt-1 text-[11px] text-slate-400 leading-snug"></div>
         <div id="kpi-drop-rate" class="mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 mono">
           Ritmo: -0,72 m/día (Ayer cayó -0,97 m)
@@ -314,7 +315,7 @@
           <p>
             • <strong>Auto-Actualización:</strong> Al abrirse, este simulador busca automáticamente el archivo <code>datos_sni.json</code> generado por tu tarea programada diaria y consulta la API meteorológica de Guayaquil.<br>
             • <strong>Efecto Colombia:</strong> Cada <strong>100 MW</strong> comprados a Colombia permiten apagar <strong id="txt-ahorro-col">~7,7 m³/s</strong> de turbinas en Paute, ahorrando <strong id="txt-ahorro-col-hm3">0,66 millones de m³/día</strong> en Mazar.<br>
-            • <strong>Agua por MW en Paute:</strong> <span id="txt-k-paute">calculado cada día con datos reales de Celec Sur</span>. Es más que la caída física de la cascada porque Molino y Sopladora también usan el agua que llega a Amaluza entre las dos presas.
+            • <strong>Agua por MW en Paute:</strong> <span id="txt-k-paute">calculado cada día con datos reales de Celec Sur</span>..
           </p>
         </div>
       </div>
@@ -342,6 +343,9 @@
               </span>
               <span class="flex items-center gap-1.5 text-rose-400 font-medium">
                 <span class="w-3 h-1 bg-rose-500 rounded"></span> Límite Seguro (2.115 m)
+              </span>
+              <span class="flex items-center gap-1.5 text-amber-400 font-medium">
+                <span class="w-3 h-3 bg-amber-500/30 border border-dashed border-amber-400 rounded-sm"></span> Zona de racionamiento (2.115–2.120 m)
               </span>
             </div>
           </div>
@@ -578,6 +582,16 @@
               borderDash: [6, 4],
               pointRadius: 0,
               fill: false
+            },
+            {
+              label: 'Zona de racionamiento (hasta 2.120 m)',
+              data: Array(fechasProyeccion.length).fill(2120),
+              borderColor: 'rgba(245, 158, 11, 0.8)',
+              backgroundColor: 'rgba(245, 158, 11, 0.16)',
+              borderWidth: 1.5,
+              borderDash: [5, 4],
+              pointRadius: 0,
+              fill: '-1'
             }
           ]
         },
@@ -786,6 +800,19 @@
       const volModelo = -(f0.qturb - f0.qin) * 0.0864;
       const rangoModelo = ModeloMazar.rango(proyCon.R, MOD.rango_cuantiles, cotaHoy);
       const kpiRange = document.getElementById('kpi-range');
+      // Zona de racionamiento (2.120 m): en 2023 (~2.121) y 2024 (~2.118) empezó ahí el racionamiento fuerte
+      {
+        const dd = proyCon.R.daily; let tz = cotaHoy <= 2120 ? 0 : null;
+        for (let k = 1; k < dd.length && tz === null; k++) if (dd[k].cota <= 2120) tz = dd[k - 1].t + (dd[k - 1].cota - 2120) / Math.max(1e-6, dd[k - 1].cota - dd[k].cota);
+        const kz = document.getElementById('kpi-zona');
+        if (tz === 0) kz.textContent = 'Ya está en la zona de racionamiento (bajo 2.120 m)';
+        else if (tz === null) kz.textContent = 'No entra a la zona de racionamiento (2.120 m) en 60 días';
+        else {
+          const fz = new Date(); fz.setDate(fz.getDate() + Math.round(tz));
+          const mz = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][fz.getMonth()];
+          kz.textContent = `Entra a la zona de racionamiento (2.120 m) en ≈ ${tz < 10 ? tz.toFixed(1).replace('.', ',') : Math.round(tz)} días, alrededor del ${fz.getDate()} de ${mz}`;
+        }
+      }
       // Panel de probabilidades (siempre con el pronóstico automático, y con una semana seca)
       if (MOD.ratios_percentiles && ModeloMazar.probabilidades) {
         const umbral = parseFloat(document.getElementById('prob-umbral').value);
@@ -840,7 +867,10 @@
       }
 
       // 6. Déficit estructural y días salvados por Colombia
-      const generacionSosteniblePauteMW = Math.round(qMazar * K_PAUTE);
+      // Lo que Paute puede generar solo con el agua que entra (sin vaciar Mazar), con la física calibrada
+      const PARM = ModeloMazar.parametros();
+      const kmzHoy = 0.00981 * PARM.eficiencia_mazar * Math.max(20, cotaHoy - (MOD.amaluzaCota || 1980));
+      const generacionSosteniblePauteMW = Math.round(qMazar * (kmzHoy + PARM.k_molino_sopladora) + PARM.k_molino_sopladora * PARM.beta_cuenca_intermedia * qMazar);
       const ofertaSostenibleSinVaciarMazar = GENERACION_INTERNA_BASE_SNI + ccsMW + importColombiaMW + generacionSosteniblePauteMW;
       const deficitRealMW = ofertaSostenibleSinVaciarMazar - demandaNetaAtender;
 
@@ -855,7 +885,20 @@
 
       document.getElementById('kpi-ccs-mw').textContent = ccsMW + ' MW';
       document.getElementById('kpi-col-mw').textContent = '+' + importColombiaMW + ' MW';
-      document.getElementById('kpi-paute-req').innerHTML = `Exigencia a Paute-Mazar: <strong class="text-amber-300 mono">${cargaExigidaPauteMW} MW</strong> (<span class="mono">${qTurbinadoPaute} m³/s</span>)`;
+      document.getElementById('kpi-paute-req').innerHTML = `Exigencia a Paute-Mazar hoy: <strong class="text-amber-300 mono">${Math.round(f0.paute)} MW</strong> (Mazar suelta <span class="mono">${Math.round(f0.qturb)} m³/s</span>; le entran ${Math.round(f0.qin)})`;
+      // Datos del día en la tarjeta del embalse y en las notas
+      const c24 = DATOS_OFICIALES_DIA.caida_24h;
+      const elC24 = document.getElementById('tank-caida-24h');
+      if (elC24 && c24 != null) { elC24.textContent = (c24 >= 0 ? '+' : '') + c24.toFixed(2).replace('.', ',') + ' m en 24 h'; elC24.className = 'text-[10px] font-semibold mono ' + (c24 >= 0 ? 'text-emerald-400' : 'text-rose-400'); }
+      const elPT = document.getElementById('tank-perdida-total');
+      if (elPT) elPT.textContent = `Está ${(COTA_MAXIMA_MAZAR - cotaHoy).toFixed(2).replace('.', ',')} m bajo su nivel máximo (2.153 m)`;
+      const elAS = document.getElementById('tank-amaluza-sopladora');
+      if (elAS && DATOS_OFICIALES_DIA.cota_amaluza) elAS.textContent = `${DATOS_OFICIALES_DIA.cota_amaluza.toFixed(1).replace('.', ',')} m • ${(DATOS_OFICIALES_DIA.cota_sopladora || 0).toFixed(1).replace('.', ',')} m`;
+      const qPor100 = 100 / (kmzHoy + PARM.k_molino_sopladora);
+      const elA1 = document.getElementById('txt-ahorro-col'); if (elA1) elA1.textContent = '~' + qPor100.toFixed(1).replace('.', ',') + ' m³/s';
+      const elA2 = document.getElementById('txt-ahorro-col-hm3'); if (elA2) elA2.textContent = (qPor100 * 0.0864).toFixed(2).replace('.', ',') + ' millones de m³/día';
+      const elK2 = document.getElementById('txt-k-paute');
+      if (elK2 && MOD.historial) elK2.textContent = `${(kmzHoy + PARM.k_molino_sopladora).toFixed(1).replace('.', ',')} MW por cada m³/s que sale de Mazar (${kmzHoy.toFixed(1).replace('.', ',')} en Mazar y ${PARM.k_molino_sopladora.toFixed(1).replace('.', ',')} en Molino y Sopladora). Además, Molino y Sopladora aprovechan el agua que llega entre las dos presas (≈ ${Math.round(PARM.beta_cuenca_intermedia * 100)} % del caudal de Mazar); Amaluza está en ${(MOD.amaluzaCota || 0).toFixed(1).replace('.', ',')} m. Calibrado con ${MOD.historial.dias} días de Celec Sur (${MOD.historial.desde} a ${MOD.historial.hasta})`;
 
       // Tarjeta 4: cortes si Mazar llega a 2.115 m y aporte de Colombia (modelo compartido)
       const kpiColSaved = document.getElementById('kpi-colombia-saved');
