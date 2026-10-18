@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Mismo modelo que el simulador "Mazar y generación" (se calibra cada día con el historial de Celec Sur) -->
-  <script src="https://luiscampozano.github.io/simulador-mazar/modelo.js?v=20261018b"></script>
+  <script src="https://luiscampozano.github.io/simulador-mazar/modelo.js?v=20261018c"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -99,23 +99,30 @@
 
     <!-- TARJETAS DE DIAGNÓSTICO EJECUTIVO EN TIEMPO REAL -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-      <!-- Tarjeta 1: Cuenta regresiva Mazar -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 relative overflow-hidden">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Días hasta el nivel mínimo (2.115 m)</span>
-          <span id="kpi-colchon-badge" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-sky-500/15 text-sky-300 mono">Margen: 8,09 m</span>
+      <!-- Tarjeta 1: Cuenta regresiva de Mazar (dos números) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 relative overflow-hidden sm:col-span-2">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Cuenta regresiva de Mazar</span>
+          <span id="kpi-colchon-badge" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-sky-500/15 text-sky-300 mono">Margen: –</span>
         </div>
-        <div class="mt-2 flex items-baseline gap-2">
-          <span id="kpi-days" class="text-3xl md:text-4xl font-extrabold mono text-amber-400">11.2 días</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+          <div class="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
+            <div class="text-[11px] uppercase tracking-wider text-amber-300 font-semibold">1 · Zona de racionamiento (2.120 m)</div>
+            <div id="kpi-dias-zona" class="text-4xl md:text-5xl font-extrabold mono text-amber-400 mt-1">–</div>
+            <div id="kpi-zona" class="mt-1 text-xs font-semibold text-slate-200"></div>
+            <p class="mt-1 text-[11px] text-slate-400 leading-snug">Cuándo empezarían los cortes de luz: en 2023 y 2024 el racionamiento fuerte comenzó cuando Mazar bajó a este nivel.</p>
+            <div id="kpi-range-zona" class="mt-1 text-[11px] font-semibold text-slate-300"></div>
+          </div>
+          <div class="rounded-xl border border-rose-500/30 bg-rose-500/5 p-3">
+            <div class="text-[11px] uppercase tracking-wider text-rose-300 font-semibold">2 · Nivel mínimo (2.115 m)</div>
+            <div id="kpi-days" class="text-4xl md:text-5xl font-extrabold mono text-rose-400 mt-1">–</div>
+            <div id="kpi-date" class="mt-1 text-xs font-semibold text-slate-200"></div>
+            <p class="mt-1 text-[11px] text-slate-400 leading-snug">Cuándo Mazar se queda sin reserva: Paute solo podría generar con el agua que trae el río y los cortes serían más largos.</p>
+            <div id="kpi-range" class="mt-1 text-[11px] font-semibold text-slate-300"></div>
+          </div>
         </div>
-        <div id="kpi-date" class="mt-1 text-xs font-semibold text-slate-300">
-          Fecha estimada límite: <span class="text-white">27 de octubre</span>
-        </div>
-        <div id="kpi-zona" class="mt-1 text-xs font-semibold text-amber-300 leading-snug"></div>
-        <div id="kpi-range" class="mt-1 text-[11px] text-slate-400 leading-snug"></div>
-        <div id="kpi-drop-rate" class="mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 mono">
-          Ritmo: -0,72 m/día (Ayer cayó -0,97 m)
-        </div>
+        <p class="mt-2 text-[10px] text-slate-500 leading-snug">Los rangos muestran dónde cayó la realidad en la mitad de las pruebas con fechas pasadas (2023–2026), si Paute sigue generando como la última semana.</p>
+        <div id="kpi-drop-rate" class="mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 mono">Ritmo hoy: –</div>
       </div>
 
       <!-- Tarjeta 2: Balance de Potencia SNI y Déficit -->
@@ -804,13 +811,16 @@
       {
         const dd = proyCon.R.daily; let tz = cotaHoy <= 2120 ? 0 : null;
         for (let k = 1; k < dd.length && tz === null; k++) if (dd[k].cota <= 2120) tz = dd[k - 1].t + (dd[k - 1].cota - 2120) / Math.max(1e-6, dd[k - 1].cota - dd[k].cota);
-        const kz = document.getElementById('kpi-zona');
-        if (tz === 0) kz.textContent = 'Ya está en la zona de racionamiento (bajo 2.120 m)';
-        else if (tz === null) kz.textContent = 'No entra a la zona de racionamiento (2.120 m) en 60 días';
+        const kz = document.getElementById('kpi-zona'), kn = document.getElementById('kpi-dias-zona'), kr = document.getElementById('kpi-range-zona');
+        if (tz === 0) { kn.textContent = 'Ya'; kz.textContent = 'Mazar ya está bajo 2.120 m'; kr.textContent = ''; }
+        else if (tz === null) { kn.textContent = '+60 días'; kz.textContent = 'No entra a la zona en 60 días'; kr.textContent = ''; }
         else {
           const fz = new Date(); fz.setDate(fz.getDate() + Math.round(tz));
           const mz = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][fz.getMonth()];
-          kz.textContent = `Entra a la zona de racionamiento (2.120 m) en ≈ ${tz < 10 ? tz.toFixed(1).replace('.', ',') : Math.round(tz)} días, alrededor del ${fz.getDate()} de ${mz}`;
+          kn.textContent = (tz < 10 ? tz.toFixed(1).replace('.', ',') : Math.round(tz)) + ' días';
+          kz.textContent = `Alrededor del ${fz.getDate()} de ${mz}`;
+          const rz = ModeloMazar.rango(proyCon.R, MOD.rango_cuantiles, cotaHoy, 2120);
+          kr.textContent = rz ? `Rango probable: ${rz[0] != null ? Math.round(rz[0]) : '–'} a ${rz[1] != null ? Math.round(rz[1]) + ' días' : 'más de 60 días'}` : '';
         }
       }
       // Panel de probabilidades (siempre con el pronóstico automático, y con una semana seca)
@@ -839,9 +849,9 @@
       if (!isFinite(diasHastaColapso)) {
         kpiDays.textContent = 'Más de 60 días';
         kpiDays.className = 'text-2xl md:text-3xl font-extrabold mono text-emerald-400';
-        kpiDate.innerHTML = 'Con este escenario: <span class="text-emerald-300">no toca 2.115 m en 60 días</span>';
+        kpiDate.innerHTML = 'Con este escenario <span class="text-emerald-300">no llega en 60 días</span>';
         kpiDropRate.textContent = `Ritmo hoy: ${ritmoModelo >= 0 ? '+' : ''}${ritmoModelo.toFixed(2)} m/día (${volModelo.toFixed(1)} HM³/día)`;
-        kpiRange.textContent = (rangoModelo && rangoModelo[0] != null) ? `Rango probable: desde ${Math.round(rangoModelo[0])} días hasta más de 60 · según pruebas con fechas pasadas (2023–2026)` : '';
+        kpiRange.textContent = (rangoModelo && rangoModelo[0] != null) ? `Rango probable: desde ${Math.round(rangoModelo[0])} días hasta más de 60` : '';
         kpiDropRate.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 mono';
       } else {
         const diasRedondeados = Math.max(1.0, diasHastaColapso);
@@ -860,9 +870,9 @@
           kpiDays.className = 'text-3xl md:text-4xl font-extrabold mono text-sky-400';
         }
 
-        kpiDate.innerHTML = `Toca 2.115 m el: <span class="text-white font-bold">${textoFechaColapso}</span>`;
+        kpiDate.innerHTML = `Alrededor del <span class="text-white font-bold">${textoFechaColapso}</span>`;
         kpiDropRate.textContent = `Ritmo hoy: ${ritmoModelo.toFixed(2)} m/día (${volModelo.toFixed(1)} HM³/día) · con lluvia prevista`;
-        kpiRange.textContent = rangoModelo ? `Rango probable: entre ${Math.round(rangoModelo[0])} y ${rangoModelo[1] != null ? Math.round(rangoModelo[1]) + ' días' : 'más de 60 días'} · así de lejos cayó la realidad en la mitad de las pruebas con fechas pasadas (2023–2026), si Paute sigue generando como la última semana` : '';
+        kpiRange.textContent = rangoModelo ? `Rango probable: ${Math.round(rangoModelo[0])} a ${rangoModelo[1] != null ? Math.round(rangoModelo[1]) + ' días' : 'más de 60 días'}` : '';
         kpiDropRate.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 mono';
       }
 
