@@ -166,161 +166,7 @@
     </section>
 
     <!-- PANEL: PROBABILIDADES (modelo compartido) -->
-    <section id="prob-panel" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-      <div class="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 class="text-sm font-bold text-white">Probabilidad de que Mazar llegue a…</h2>
-        <select id="prob-umbral" onchange="updateSimulation()" class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
-          <option value="2115">2.115 m · nivel mínimo</option>
-          <option value="2120">2.120 m · referencia de 2023–2024</option>
-        </select>
-      </div>
-      <div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
-        <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-sky-500 mr-1.5"></span>con la lluvia pronosticada</span>
-        <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-rose-500 mr-1.5"></span>si esta semana fuera seca como la anterior</span>
-      </div>
-      <div id="prob-bars" class="space-y-3"></div>
-      <p class="text-[10px] text-slate-500 leading-snug">Cómo se calcula: el modelo proyecta la cota con los valores elegidos (cortes, Colombia…) y esa trayectoria se compara con lo que pasó en la realidad en las pruebas con fechas pasadas de caudal bajo (2023–2026). La probabilidad es la parte de esos casos que llega al umbral antes de cada plazo. 2.120 m es solo una referencia: en 2023 y 2024 el racionamiento fuerte empezó entre 2.118 y 2.121 m, pero no es un umbral oficial. No incluye decisiones de operación futuras.</p>
-    </section>
-
-    <!-- CUERPO PRINCIPAL: CONTROLES INTERACTIVOS (IZQUIERDA) + GRÁFICOS Y TANQUE MAZAR (DERECHA) -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-
-      <!-- PANEL DE VARIABLES DE CONTROL (5 COLUMNAS) -->
-      <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3.5">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
-          <h2 class="text-sm md:text-base font-bold text-white flex items-center gap-2">
-            🎛️ 6 Variables en Tiempo Real
-          </h2>
-          <span class="text-[11px] text-sky-400 font-medium">Mueve cada barra para simular</span>
-        </div>
-
-        <!-- Variable 1: Caudal Entrante a Mazar + Pronóstico Lluvias Austro -->
-        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
-          <div class="flex justify-between items-center">
-            <label class="text-xs font-semibold text-sky-300">1. Caudal Cuenca Paute-Mazar (Lluvias Austro)</label>
-            <span id="val-q-mazar" class="text-xs font-bold mono px-2 py-0.5 rounded bg-sky-500/15 text-sky-300">57.5 m³/s</span>
-          </div>
-          <input id="input-q-mazar" type="range" min="5" max="140" step="0.5" value="57.5" class="w-full" oninput="updateSimulation()" />
-          <div class="flex justify-between text-[10px] text-slate-400">
-            <span>Sequía (20 m³/s)</span>
-            <span id="lbl-q-mazar-ref" class="text-sky-300 font-medium">Reporte Hoy: 57,46 m³/s</span>
-            <span>Media Oct: 93,5 m³/s</span>
-          </div>
-        </div>
-
-        <!-- Variable 2: Caudal Coca Codo Sinclair y Efecto Sedimentos -->
-        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
-          <div class="flex justify-between items-center">
-            <label class="text-xs font-semibold text-emerald-300">2. Caudal Río Coca (Coca Codo Sinclair)</label>
-            <span id="val-q-coca" class="text-xs font-bold mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300">170 m³/s</span>
-          </div>
-          <input id="input-q-coca" type="range" min="80" max="450" step="1" value="170" class="w-full slider-emerald" oninput="updateSimulation()" />
-          <div class="flex justify-between text-[10px] text-slate-400">
-            <span>Estiaje (110 m³/s)</span>
-            <span class="text-emerald-300 font-medium">Hoy (&lt;200 m³/s): ~170 m³/s</span>
-            <span>⚠️ &gt;245 m³/s: Cierre Sedimentos</span>
-          </div>
-        </div>
-
-        <!-- Pronóstico de lluvia en las cuencas (Open-Meteo) -->
-        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-2">
-          <label class="text-xs font-semibold text-sky-300">🌧️ Pronóstico de lluvia en las cuencas</label>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="text-[11px] text-slate-300 space-y-1 min-w-0">
-              <span class="block">Cuenca del Paute (Mazar)</span>
-              <select id="input-lluvia-paute" onchange="updateSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-white">
-                <option value="auto">Pronóstico calibrado (automático)</option>
-                <option value="seco">Seco: el estiaje sigue</option>
-                <option value="inamhi">Pulso de lluvia (2–3 días)</option>
-                <option value="nino">Lluvia sostenida</option>
-              </select>
-            </label>
-            <label class="text-[11px] text-slate-300 space-y-1 min-w-0">
-              <span class="block">Cuenca del Coca (Coca Codo)</span>
-              <select id="input-lluvia-coca" onchange="updateSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-white">
-                <option value="auto">Pronóstico GloFAS (automático)</option>
-                <option value="seco">Seco: el estiaje sigue</option>
-                <option value="inamhi">Pulso de lluvia (2–3 días)</option>
-                <option value="nino">Lluvia sostenida</option>
-              </select>
-            </label>
-          </div>
-          <p id="lbl-lluvia" class="text-[10px] text-slate-400 leading-snug">Pronóstico automático de Open-Meteo para los próximos 7 días. Seco: < 15 mm; lluvia sostenida: > 70 mm tras una semana con > 40 mm; en otro caso, pulso de lluvia.</p>
-        </div>
-
-        <!-- Variable 3: Importación de Energía desde Colombia -->
-        <div class="p-3 rounded-xl bg-yellow-950/20 border border-yellow-500/30 space-y-1">
-          <div class="flex justify-between items-center">
-            <label class="text-xs font-semibold text-yellow-300 flex items-center gap-1.5">
-              <span>3. 🇨🇴 Compra de Energía a Colombia</span>
-            </label>
-            <span id="val-import-col" class="text-xs font-bold mono px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300">250 MW</span>
-          </div>
-          <input id="input-import-col" type="range" min="0" max="450" step="5" value="250" class="w-full slider-yellow" oninput="updateSimulation()" />
-          <div class="flex justify-between text-[10px] text-slate-400">
-            <span>Corte (0 MW)</span>
-            <span class="text-yellow-300 font-medium">Despacho estimado (250 MW)</span>
-            <span>Límite Enlace (450 MW)</span>
-          </div>
-        </div>
-
-        <!-- Variable 4: Pronóstico Clima en la Costa (Temperatura Guayaquil / A/C) -->
-        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
-          <div class="flex justify-between items-center">
-            <label class="text-xs font-semibold text-amber-300">4. Clima en la Costa: Calor Guayaquil / A/C</label>
-            <span id="val-temp-costa" class="text-xs font-bold mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">32.5 °C</span>
-          </div>
-          <input id="input-temp-costa" type="range" min="25" max="37" step="0.5" value="32.5" class="w-full slider-amber" oninput="updateSimulation()" />
-          <div class="flex justify-between text-[10px] text-slate-400">
-            <span>Lluvia INAMHI (27°C: +0 MW)</span>
-            <span class="text-amber-300 font-medium">Pico Tarde (32,5°C: +220 MW)</span>
-            <span>Calor Extremo (36°C: +392 MW)</span>
-          </div>
-        </div>
-
-        <!-- Variable 5: Demanda Nacional Base (MW) -->
-        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
-          <div class="flex justify-between items-center">
-            <label class="text-xs font-semibold text-purple-300">5. Demanda Nacional Base (Sin Clima Costa)</label>
-            <span id="val-demanda-base" class="text-xs font-bold mono px-2 py-0.5 rounded bg-purple-500/15 text-purple-300">4.455 MW</span>
-          </div>
-          <input id="input-demanda-base" type="range" min="3500" max="5300" step="1" value="4455" class="w-full slider-purple" oninput="updateSimulation()" />
-          <div class="flex justify-between text-[10px] text-slate-400">
-            <span>Valle/Media (4.200 MW)</span>
-            <span>Demanda Base Hoy (4.455 MW)</span>
-            <span>Pico Récord (5.000 MW)</span>
-          </div>
-        </div>
-
-        <!-- Variable 6: Cortes a Empresas + Racionamiento General -->
-        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
-          <div class="flex justify-between items-center">
-            <label class="text-xs font-semibold text-rose-300">6. Cortes a Empresas (MV/AV) y Racionamiento</label>
-            <span id="val-cortes-mw" class="text-xs font-bold mono px-2 py-0.5 rounded bg-rose-500/15 text-rose-300">280 MW</span>
-          </div>
-          <input id="input-cortes-mw" type="range" min="0" max="900" step="5" value="280" class="w-full slider-rose" oninput="updateSimulation()" />
-          <div class="flex justify-between text-[10px] text-slate-400">
-            <span>Sin cortes (0 MW)</span>
-            <span class="text-rose-300 font-medium">Restricción Industrial Hoy (~280 MW)</span>
-            <span>Cortes Generales 5h (600+ MW)</span>
-          </div>
-        </div>
-
-        <!-- NOTA METODOLÓGICA DEL MODELO FÍSICO -->
-        <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/60 text-[11px] text-slate-300 space-y-1">
-          <div class="font-bold text-white">📐 Física del Sistema + Conexión Automática Diaria:</div>
-          <p>
-            • <strong>Auto-Actualización:</strong> Al abrirse, este simulador busca automáticamente el archivo <code>datos_sni.json</code> generado por tu tarea programada diaria y consulta la API meteorológica de Guayaquil.<br>
-            • <strong>Efecto Colombia:</strong> Cada <strong>100 MW</strong> comprados a Colombia permiten apagar <strong id="txt-ahorro-col">~7,7 m³/s</strong> de turbinas en Paute, ahorrando <strong id="txt-ahorro-col-hm3">0,66 millones de m³/día</strong> en Mazar.<br>
-            • <strong>Agua por MW en Paute:</strong> <span id="txt-k-paute">calculado cada día con datos reales de Celec Sur</span>..
-          </p>
-        </div>
-      </div>
-
-      <!-- PANEL DERECHO: VISUALIZACIÓN DE CURVA DE AGOTAMIENTO + TANQUE DE MAZAR (7 COLUMNAS) -->
-      <div class="lg:col-span-7 flex flex-col gap-5">
-
-        <!-- Gráfico 1: Proyección Diaria de Cota Mazar -->
+    <!-- Gráfico de la trayectoria, justo debajo de los números principales -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 flex-1 flex flex-col">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <div>
@@ -352,7 +198,23 @@
           </div>
         </div>
 
-        <!-- Fila Inferior: Tanque Visual del Embalse + Desglose de Generación en MW -->
+    <section id="prob-panel" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 class="text-sm font-bold text-white">Probabilidad de que Mazar llegue a…</h2>
+        <select id="prob-umbral" onchange="updateSimulation()" class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+          <option value="2115">2.115 m · nivel mínimo</option>
+          <option value="2120">2.120 m · referencia de 2023–2024</option>
+        </select>
+      </div>
+      <div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
+        <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-sky-500 mr-1.5"></span>con la lluvia pronosticada</span>
+        <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-rose-500 mr-1.5"></span>si esta semana fuera seca como la anterior</span>
+      </div>
+      <div id="prob-bars" class="space-y-3"></div>
+      <p class="text-[10px] text-slate-500 leading-snug">Cómo se calcula: el modelo proyecta la cota con los valores elegidos (cortes, Colombia…) y esa trayectoria se compara con lo que pasó en la realidad en las pruebas con fechas pasadas de caudal bajo (2023–2026). La probabilidad es la parte de esos casos que llega al umbral antes de cada plazo. 2.120 m es solo una referencia: en 2023 y 2024 el racionamiento fuerte empezó entre 2.118 y 2.121 m, pero no es un umbral oficial. No incluye decisiones de operación futuras.</p>
+    </section>
+
+    <!-- Tanque de Mazar y despacho del SNI -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
 
           <!-- Tanque Visual en Corte Transversal de Mazar (5 cols) -->
@@ -493,6 +355,140 @@
             </div>
           </div>
 
+        </div>
+
+    <!-- CUERPO PRINCIPAL: CONTROLES INTERACTIVOS (IZQUIERDA) + GRÁFICOS Y TANQUE MAZAR (DERECHA) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+      <!-- PANEL DE VARIABLES DE CONTROL (5 COLUMNAS) -->
+      <div class="lg:col-span-12 bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3.5">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+          <h2 class="text-sm md:text-base font-bold text-white flex items-center gap-2">
+            🎛️ 6 Variables en Tiempo Real
+          </h2>
+          <span class="text-[11px] text-sky-400 font-medium">Mueve cada barra para simular</span>
+        </div>
+
+        <!-- Variable 1: Caudal Entrante a Mazar + Pronóstico Lluvias Austro -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-sky-300">1. Caudal Cuenca Paute-Mazar (Lluvias Austro)</label>
+            <span id="val-q-mazar" class="text-xs font-bold mono px-2 py-0.5 rounded bg-sky-500/15 text-sky-300">57.5 m³/s</span>
+          </div>
+          <input id="input-q-mazar" type="range" min="5" max="140" step="0.5" value="57.5" class="w-full" oninput="updateSimulation()" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Sequía (20 m³/s)</span>
+            <span id="lbl-q-mazar-ref" class="text-sky-300 font-medium">Reporte Hoy: 57,46 m³/s</span>
+            <span>Media Oct: 93,5 m³/s</span>
+          </div>
+        </div>
+
+        <!-- Variable 2: Caudal Coca Codo Sinclair y Efecto Sedimentos -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-emerald-300">2. Caudal Río Coca (Coca Codo Sinclair)</label>
+            <span id="val-q-coca" class="text-xs font-bold mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300">170 m³/s</span>
+          </div>
+          <input id="input-q-coca" type="range" min="80" max="450" step="1" value="170" class="w-full slider-emerald" oninput="updateSimulation()" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Estiaje (110 m³/s)</span>
+            <span class="text-emerald-300 font-medium">Hoy (&lt;200 m³/s): ~170 m³/s</span>
+            <span>⚠️ &gt;245 m³/s: Cierre Sedimentos</span>
+          </div>
+        </div>
+
+        <!-- Pronóstico de lluvia en las cuencas (Open-Meteo) -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-2">
+          <label class="text-xs font-semibold text-sky-300">🌧️ Pronóstico de lluvia en las cuencas</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="text-[11px] text-slate-300 space-y-1 min-w-0">
+              <span class="block">Cuenca del Paute (Mazar)</span>
+              <select id="input-lluvia-paute" onchange="updateSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-white">
+                <option value="auto">Pronóstico calibrado (automático)</option>
+                <option value="seco">Seco: el estiaje sigue</option>
+                <option value="inamhi">Pulso de lluvia (2–3 días)</option>
+                <option value="nino">Lluvia sostenida</option>
+              </select>
+            </label>
+            <label class="text-[11px] text-slate-300 space-y-1 min-w-0">
+              <span class="block">Cuenca del Coca (Coca Codo)</span>
+              <select id="input-lluvia-coca" onchange="updateSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-white">
+                <option value="auto">Pronóstico GloFAS (automático)</option>
+                <option value="seco">Seco: el estiaje sigue</option>
+                <option value="inamhi">Pulso de lluvia (2–3 días)</option>
+                <option value="nino">Lluvia sostenida</option>
+              </select>
+            </label>
+          </div>
+          <p id="lbl-lluvia" class="text-[10px] text-slate-400 leading-snug">Pronóstico automático de Open-Meteo para los próximos 7 días. Seco: < 15 mm; lluvia sostenida: > 70 mm tras una semana con > 40 mm; en otro caso, pulso de lluvia.</p>
+        </div>
+
+        <!-- Variable 3: Importación de Energía desde Colombia -->
+        <div class="p-3 rounded-xl bg-yellow-950/20 border border-yellow-500/30 space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-yellow-300 flex items-center gap-1.5">
+              <span>3. 🇨🇴 Compra de Energía a Colombia</span>
+            </label>
+            <span id="val-import-col" class="text-xs font-bold mono px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300">250 MW</span>
+          </div>
+          <input id="input-import-col" type="range" min="0" max="450" step="5" value="250" class="w-full slider-yellow" oninput="updateSimulation()" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Corte (0 MW)</span>
+            <span class="text-yellow-300 font-medium">Despacho estimado (250 MW)</span>
+            <span>Límite Enlace (450 MW)</span>
+          </div>
+        </div>
+
+        <!-- Variable 4: Pronóstico Clima en la Costa (Temperatura Guayaquil / A/C) -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-amber-300">4. Clima en la Costa: Calor Guayaquil / A/C</label>
+            <span id="val-temp-costa" class="text-xs font-bold mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">32.5 °C</span>
+          </div>
+          <input id="input-temp-costa" type="range" min="25" max="37" step="0.5" value="32.5" class="w-full slider-amber" oninput="updateSimulation()" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Lluvia INAMHI (27°C: +0 MW)</span>
+            <span class="text-amber-300 font-medium">Pico Tarde (32,5°C: +220 MW)</span>
+            <span>Calor Extremo (36°C: +392 MW)</span>
+          </div>
+        </div>
+
+        <!-- Variable 5: Demanda Nacional Base (MW) -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-purple-300">5. Demanda Nacional Base (Sin Clima Costa)</label>
+            <span id="val-demanda-base" class="text-xs font-bold mono px-2 py-0.5 rounded bg-purple-500/15 text-purple-300">4.455 MW</span>
+          </div>
+          <input id="input-demanda-base" type="range" min="3500" max="5300" step="1" value="4455" class="w-full slider-purple" oninput="updateSimulation()" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Valle/Media (4.200 MW)</span>
+            <span>Demanda Base Hoy (4.455 MW)</span>
+            <span>Pico Récord (5.000 MW)</span>
+          </div>
+        </div>
+
+        <!-- Variable 6: Cortes a Empresas + Racionamiento General -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-rose-300">6. Cortes a Empresas (MV/AV) y Racionamiento</label>
+            <span id="val-cortes-mw" class="text-xs font-bold mono px-2 py-0.5 rounded bg-rose-500/15 text-rose-300">280 MW</span>
+          </div>
+          <input id="input-cortes-mw" type="range" min="0" max="900" step="5" value="280" class="w-full slider-rose" oninput="updateSimulation()" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Sin cortes (0 MW)</span>
+            <span class="text-rose-300 font-medium">Restricción Industrial Hoy (~280 MW)</span>
+            <span>Cortes Generales 5h (600+ MW)</span>
+          </div>
+        </div>
+
+        <!-- NOTA METODOLÓGICA DEL MODELO FÍSICO -->
+        <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/60 text-[11px] text-slate-300 space-y-1">
+          <div class="font-bold text-white">📐 Física del Sistema + Conexión Automática Diaria:</div>
+          <p>
+            • <strong>Auto-Actualización:</strong> Al abrirse, este simulador busca automáticamente el archivo <code>datos_sni.json</code> generado por tu tarea programada diaria y consulta la API meteorológica de Guayaquil.<br>
+            • <strong>Efecto Colombia:</strong> Cada <strong>100 MW</strong> comprados a Colombia permiten apagar <strong id="txt-ahorro-col">~7,7 m³/s</strong> de turbinas en Paute, ahorrando <strong id="txt-ahorro-col-hm3">0,66 millones de m³/día</strong> en Mazar.<br>
+            • <strong>Agua por MW en Paute:</strong> <span id="txt-k-paute">calculado cada día con datos reales de Celec Sur</span>..
+          </p>
         </div>
       </div>
 
