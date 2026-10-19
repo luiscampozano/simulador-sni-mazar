@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Mismo modelo que el simulador "Mazar y generación" (se calibra cada día con el historial de Celec Sur) -->
-  <script src="https://luiscampozano.github.io/simulador-mazar/modelo.js?v=20261018c"></script>
+  <script src="https://luiscampozano.github.io/simulador-mazar/modelo.js?v=20261019a"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -777,7 +777,7 @@
       const MOD = DATOS_OFICIALES_DIA.modelo || {};
       const ctxModelo = {
         cota: cotaHoy, inicio: new Date(), diaSemana0: MOD.diaSemana0, amaluzaCota: MOD.amaluzaCota, amaluzaRitmo: MOD.amaluzaRitmo,
-        deltaDia: MOD.deltaDia, cutDias: MOD.cutDias, serieMazar: MOD.serieMazar, serieCoca: MOD.serieCoca, horizonte: 60
+        deltaDia: MOD.deltaDia, cutDias: MOD.cutDias, cutPlan: MOD.cutPlan, serieMazar: MOD.serieMazar, serieCoca: MOD.serieCoca, horizonte: 60
       };
       function proyectar(importMW, wP, wC, serieM) {
         const R = ModeloMazar.simular({
