@@ -1,5 +1,5 @@
 {
-  "fecha_reporte": "DOMINGO 18 OCT 2026 (21h40)",
+  "fecha_reporte": "DOMINGO 18 OCT 2026 (21h54)",
   "cota_mazar": 2122.79,
   "caida_24h": -0.61,
   "caudal_mazar": 27.0,
@@ -33,7 +33,7 @@
   },
   "sincronizado_con": {
     "simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
-    "datos_de": "2026-10-18T21:44-05:00",
+    "datos_de": "2026-10-18T21:51-05:00",
     "cota_hora": "2026-10-18T21:00:00-05:00"
   },
   "modelo": {
