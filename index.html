@@ -331,165 +331,167 @@
           </div>
         </div>
 
-      <section id="prob-panel" class="hidden order-first md:order-last bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-        <div class="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 class="text-sm font-bold text-white">Probabilidad de que Mazar llegue a…</h2>
-          <select id="prob-umbral" onchange="updateSimulation()" class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
-            <option value="2115">2.115 m · nivel mínimo</option>
-            <option value="2120">2.120 m · referencia de 2023–2024</option>
-          </select>
-        </div>
-        <div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
-          <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-sky-500 mr-1.5"></span>con la lluvia pronosticada</span>
-          <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-rose-500 mr-1.5"></span>si esta semana fuera seca como la anterior</span>
-        </div>
-        <div id="prob-bars" class="space-y-3"></div>
-        <p class="text-[10px] text-slate-500 leading-snug">Cómo se calcula: el modelo proyecta la cota con los valores elegidos (cortes, Colombia…) y esa trayectoria se compara con lo que pasó en la realidad en las pruebas con fechas pasadas de caudal bajo (2023–2026). La probabilidad es la parte de esos casos que llega al umbral antes de cada plazo. 2.120 m es solo una referencia: en 2023 y 2024 el racionamiento fuerte empezó entre 2.118 y 2.121 m, pero no es un umbral oficial. No incluye decisiones de operación futuras.</p>
-      </section>
+      <div class="flex flex-col gap-4 md:gap-5 order-first md:order-last min-w-0">
+        <section id="prob-panel" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 class="text-sm font-bold text-white">Probabilidad de que Mazar llegue a…</h2>
+            <select id="prob-umbral" onchange="updateSimulation()" class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+              <option value="2115">2.115 m · nivel mínimo</option>
+              <option value="2120">2.120 m · referencia de 2023–2024</option>
+            </select>
+          </div>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
+            <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-sky-500 mr-1.5"></span>con la lluvia pronosticada</span>
+            <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-rose-500 mr-1.5"></span>si esta semana fuera seca como la anterior</span>
+          </div>
+          <div id="prob-bars" class="space-y-3"></div>
+          <p class="text-[10px] text-slate-500 leading-snug">Cómo se calcula: el modelo proyecta la cota con los valores elegidos (cortes, Colombia…) y esa trayectoria se compara con lo que pasó en la realidad en las pruebas con fechas pasadas de caudal bajo (2023–2026). La probabilidad es la parte de esos casos que llega al umbral antes de cada plazo. 2.120 m es solo una referencia: en 2023 y 2024 el racionamiento fuerte empezó entre 2.118 y 2.121 m, pero no es un umbral oficial. No incluye decisiones de operación futuras.</p>
+        </section>
+
+          <div class="grid grid-cols-1 gap-4 md:gap-5">
+
+            <!-- Tanque Visual en Corte Transversal de Mazar (5 cols) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">
+                    Corte Transversal: Presa Mazar
+                  </h4>
+                  <span id="tank-caida-24h" class="text-[10px] font-semibold text-rose-400 mono">-0,97 m en 24h</span>
+                </div>
+                <p id="tank-perdida-total" class="text-[11px] text-slate-400 mt-0.5">
+                  Ya perdió 29,91 m desde julio (2.153 m)
+                </p>
+              </div>
+
+              <!-- Representación Gráfica del Embalse -->
+              <div class="my-3 relative h-48 w-full bg-slate-950 rounded-xl border border-slate-800 overflow-hidden flex flex-col justify-end">
+                <!-- Línea Cota Máxima 2153 -->
+                <div class="absolute top-2 left-2 right-2 border-b border-dashed border-slate-700 flex justify-between text-[10px] text-slate-400 pb-0.5 z-20">
+                  <span>Cota Máx: 2.153,0 m</span>
+                  <span>100%</span>
+                </div>
+
+                <!-- Nivel de Agua Dinámico -->
+                <div id="tank-level-bar" class="w-full bg-gradient-to-t from-sky-950 via-sky-600 to-cyan-400 transition-all duration-500 relative" style="height: 35%;">
+                  <div class="absolute -top-5 left-2 right-2 flex justify-between items-center text-[11px] font-bold text-cyan-300 mono">
+                    <span id="tank-cota-label">Hoy: 2.123,09 m</span>
+                    <span id="tank-percent">21,3% útil</span>
+                  </div>
+                </div>
+
+                <!-- Zona de Reserva Crítica Bajo 2115 m -->
+                <div class="w-full h-11 bg-rose-950/90 border-t-2 border-rose-500 flex flex-col justify-center px-2.5 text-[10px] z-10">
+                  <div class="flex justify-between font-bold text-rose-300">
+                    <span>Nivel mínimo de operación: 2.115,0 m</span>
+                    <span>Límite de operación</span>
+                  </div>
+                  <div class="text-[9px] text-rose-400/90 leading-tight">
+                    2.115 a 2.098 m: ~62 HM³ (solo descarga a Molino)
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-1 text-[11px] text-slate-300 border-t border-slate-800 pt-2">
+                <div class="flex justify-between items-center">
+                  <span>Margen sobre el nivel mínimo:</span>
+                  <strong id="tank-colchon-bottom" class="text-amber-400 mono">8,09 m (~55,0 HM³)</strong>
+                </div>
+                <div class="flex justify-between items-center text-[10px] text-slate-400">
+                  <span>Amaluza / Sopladora:</span>
+                  <span id="tank-amaluza-sopladora" class="mono text-slate-300">1.973,9 m • 1.315,7 m</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Desglose en Vivo del Balance Energético Nacional (7 cols) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+              <div>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Despacho del SNI en Tiempo Real (MW)
+                </h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">
+                  Cómo se cubre la demanda hoy y cuánto alivio da la línea de Colombia
+                </p>
+              </div>
+
+              <div class="space-y-2 my-2.5 text-xs">
+                <!-- Barra Demanda Total con Clima Costa -->
+                <div>
+                  <div class="flex justify-between mb-0.5">
+                    <span class="text-slate-300">1. Demanda Bruta (Base + Calor A/C Costa):</span>
+                    <strong id="bar-lbl-demanda" class="text-white mono">4.675 MW</strong>
+                  </div>
+                  <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="bar-demanda" class="h-full bg-purple-500 transition-all duration-300" style="width: 88%;"></div>
+                  </div>
+                </div>
+
+                <!-- Barra Menos Cortes a Empresas -->
+                <div>
+                  <div class="flex justify-between mb-0.5">
+                    <span class="text-slate-300">2. Demanda Neta a Cubrir (Tras Cortes Empresas):</span>
+                    <strong id="bar-lbl-neta" class="text-amber-300 mono">4.395 MW</strong>
+                  </div>
+                  <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="bar-neta" class="h-full bg-amber-500 transition-all duration-300" style="width: 83%;"></div>
+                  </div>
+                </div>
+
+                <!-- Barra Parque Térmico + Otras Hidro -->
+                <div>
+                  <div class="flex justify-between mb-0.5">
+                    <span class="text-slate-300">3. Parque Térmico + Otras Hidro (Agoyán, Daule, etc.):</span>
+                    <strong id="bar-lbl-firme" class="text-emerald-300 mono">2.500 MW</strong>
+                  </div>
+                  <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="bar-firme" class="h-full bg-emerald-500 transition-all duration-300" style="width: 50%;"></div>
+                  </div>
+                </div>
+
+                <!-- Barra Importación desde Colombia -->
+                <div>
+                  <div class="flex justify-between mb-0.5">
+                    <span class="text-yellow-300 font-medium">4. 🇨🇴 Importación desde Colombia:</span>
+                    <strong id="bar-lbl-col" class="text-yellow-300 mono">250 MW</strong>
+                  </div>
+                  <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="bar-col" class="h-full bg-yellow-400 transition-all duration-300" style="width: 55%;"></div>
+                  </div>
+                </div>
+
+                <!-- Barra Coca Codo Sinclair -->
+                <div>
+                  <div class="flex justify-between mb-0.5">
+                    <span class="text-slate-300">5. Aporte Efectivo Coca Codo Sinclair:</span>
+                    <strong id="bar-lbl-ccs" class="text-sky-300 mono">815 MW</strong>
+                  </div>
+                  <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="bar-ccs" class="h-full bg-sky-400 transition-all duration-300" style="width: 54%;"></div>
+                  </div>
+                </div>
+
+                <!-- Barra Exigencia al Complejo Paute-Mazar -->
+                <div>
+                  <div class="flex justify-between mb-0.5">
+                    <span class="text-slate-300">6. Carga Forzada a Paute (Mazar-Molino-Sopladora):</span>
+                    <strong id="bar-lbl-paute" class="text-rose-400 mono">830 MW</strong>
+                  </div>
+                  <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="bar-paute" class="h-full bg-rose-500 transition-all duration-300" style="width: 47%;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="diagnostic-banner" class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 leading-relaxed">
+                <!-- Se llena dinámicamente -->
+              </div>
+            </div>
+
+          </div>
+      </div>
     </div>
 
-    <!-- Tanque de Mazar y despacho del SNI -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-
-          <!-- Tanque Visual en Corte Transversal de Mazar (5 cols) -->
-          <div class="md:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">
-                  Corte Transversal: Presa Mazar
-                </h4>
-                <span id="tank-caida-24h" class="text-[10px] font-semibold text-rose-400 mono">-0,97 m en 24h</span>
-              </div>
-              <p id="tank-perdida-total" class="text-[11px] text-slate-400 mt-0.5">
-                Ya perdió 29,91 m desde julio (2.153 m)
-              </p>
-            </div>
-
-            <!-- Representación Gráfica del Embalse -->
-            <div class="my-3 relative h-48 w-full bg-slate-950 rounded-xl border border-slate-800 overflow-hidden flex flex-col justify-end">
-              <!-- Línea Cota Máxima 2153 -->
-              <div class="absolute top-2 left-2 right-2 border-b border-dashed border-slate-700 flex justify-between text-[10px] text-slate-400 pb-0.5 z-20">
-                <span>Cota Máx: 2.153,0 m</span>
-                <span>100%</span>
-              </div>
-
-              <!-- Nivel de Agua Dinámico -->
-              <div id="tank-level-bar" class="w-full bg-gradient-to-t from-sky-950 via-sky-600 to-cyan-400 transition-all duration-500 relative" style="height: 35%;">
-                <div class="absolute -top-5 left-2 right-2 flex justify-between items-center text-[11px] font-bold text-cyan-300 mono">
-                  <span id="tank-cota-label">Hoy: 2.123,09 m</span>
-                  <span id="tank-percent">21,3% útil</span>
-                </div>
-              </div>
-
-              <!-- Zona de Reserva Crítica Bajo 2115 m -->
-              <div class="w-full h-11 bg-rose-950/90 border-t-2 border-rose-500 flex flex-col justify-center px-2.5 text-[10px] z-10">
-                <div class="flex justify-between font-bold text-rose-300">
-                  <span>Nivel mínimo de operación: 2.115,0 m</span>
-                  <span>Límite de operación</span>
-                </div>
-                <div class="text-[9px] text-rose-400/90 leading-tight">
-                  2.115 a 2.098 m: ~62 HM³ (solo descarga a Molino)
-                </div>
-              </div>
-            </div>
-
-            <div class="space-y-1 text-[11px] text-slate-300 border-t border-slate-800 pt-2">
-              <div class="flex justify-between items-center">
-                <span>Margen sobre el nivel mínimo:</span>
-                <strong id="tank-colchon-bottom" class="text-amber-400 mono">8,09 m (~55,0 HM³)</strong>
-              </div>
-              <div class="flex justify-between items-center text-[10px] text-slate-400">
-                <span>Amaluza / Sopladora:</span>
-                <span id="tank-amaluza-sopladora" class="mono text-slate-300">1.973,9 m • 1.315,7 m</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Desglose en Vivo del Balance Energético Nacional (7 cols) -->
-          <div class="md:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-            <div>
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">
-                Despacho del SNI en Tiempo Real (MW)
-              </h4>
-              <p class="text-[11px] text-slate-400 mt-0.5">
-                Cómo se cubre la demanda hoy y cuánto alivio da la línea de Colombia
-              </p>
-            </div>
-
-            <div class="space-y-2 my-2.5 text-xs">
-              <!-- Barra Demanda Total con Clima Costa -->
-              <div>
-                <div class="flex justify-between mb-0.5">
-                  <span class="text-slate-300">1. Demanda Bruta (Base + Calor A/C Costa):</span>
-                  <strong id="bar-lbl-demanda" class="text-white mono">4.675 MW</strong>
-                </div>
-                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div id="bar-demanda" class="h-full bg-purple-500 transition-all duration-300" style="width: 88%;"></div>
-                </div>
-              </div>
-
-              <!-- Barra Menos Cortes a Empresas -->
-              <div>
-                <div class="flex justify-between mb-0.5">
-                  <span class="text-slate-300">2. Demanda Neta a Cubrir (Tras Cortes Empresas):</span>
-                  <strong id="bar-lbl-neta" class="text-amber-300 mono">4.395 MW</strong>
-                </div>
-                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div id="bar-neta" class="h-full bg-amber-500 transition-all duration-300" style="width: 83%;"></div>
-                </div>
-              </div>
-
-              <!-- Barra Parque Térmico + Otras Hidro -->
-              <div>
-                <div class="flex justify-between mb-0.5">
-                  <span class="text-slate-300">3. Parque Térmico + Otras Hidro (Agoyán, Daule, etc.):</span>
-                  <strong id="bar-lbl-firme" class="text-emerald-300 mono">2.500 MW</strong>
-                </div>
-                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div id="bar-firme" class="h-full bg-emerald-500 transition-all duration-300" style="width: 50%;"></div>
-                </div>
-              </div>
-
-              <!-- Barra Importación desde Colombia -->
-              <div>
-                <div class="flex justify-between mb-0.5">
-                  <span class="text-yellow-300 font-medium">4. 🇨🇴 Importación desde Colombia:</span>
-                  <strong id="bar-lbl-col" class="text-yellow-300 mono">250 MW</strong>
-                </div>
-                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div id="bar-col" class="h-full bg-yellow-400 transition-all duration-300" style="width: 55%;"></div>
-                </div>
-              </div>
-
-              <!-- Barra Coca Codo Sinclair -->
-              <div>
-                <div class="flex justify-between mb-0.5">
-                  <span class="text-slate-300">5. Aporte Efectivo Coca Codo Sinclair:</span>
-                  <strong id="bar-lbl-ccs" class="text-sky-300 mono">815 MW</strong>
-                </div>
-                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div id="bar-ccs" class="h-full bg-sky-400 transition-all duration-300" style="width: 54%;"></div>
-                </div>
-              </div>
-
-              <!-- Barra Exigencia al Complejo Paute-Mazar -->
-              <div>
-                <div class="flex justify-between mb-0.5">
-                  <span class="text-slate-300">6. Carga Forzada a Paute (Mazar-Molino-Sopladora):</span>
-                  <strong id="bar-lbl-paute" class="text-rose-400 mono">830 MW</strong>
-                </div>
-                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div id="bar-paute" class="h-full bg-rose-500 transition-all duration-300" style="width: 47%;"></div>
-                </div>
-              </div>
-            </div>
-
-            <div id="diagnostic-banner" class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 leading-relaxed">
-              <!-- Se llena dinámicamente -->
-            </div>
-          </div>
-
-        </div>
 
 
   </div>
