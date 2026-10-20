@@ -102,27 +102,27 @@
     <section class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-stretch">
       <!-- Columna izquierda: días hasta la zona crítica + Coca Codo y Colombia -->
       <div class="flex flex-col gap-3 md:gap-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 relative overflow-hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 relative overflow-hidden flex-1 flex flex-col justify-between gap-2">
           <div class="flex items-center justify-between gap-2">
             <span class="text-xs font-medium text-amber-300/90 uppercase tracking-wider">Días hasta la zona crítica (2.116 m)</span>
             <span id="kpi-colchon-badge" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-sky-500/15 text-sky-300 mono">Margen: –</span>
           </div>
           <div class="mt-2 flex flex-wrap items-end gap-x-4 gap-y-2">
             <div>
-              <span id="kpi-days" class="text-3xl md:text-4xl font-extrabold mono text-amber-400">–</span>
-              <div id="kpi-date" class="mt-1 text-xs font-semibold text-slate-300 leading-snug"></div>
+              <span id="kpi-days" class="text-4xl md:text-6xl font-extrabold mono text-amber-400">–</span>
+              <div id="kpi-date" class="mt-1 text-sm font-semibold text-slate-300 leading-snug"></div>
             </div>
             <div class="px-3 py-2 rounded-xl border border-rose-500/50 bg-rose-500/10">
               <div class="text-[10px] font-bold uppercase tracking-wider text-rose-300">Parada de Mazar (2.115 m)</div>
-              <div id="kpi-parada" class="text-xl md:text-2xl font-extrabold mono text-rose-400">–</div>
-              <div id="kpi-parada-fecha" class="text-[11px] text-rose-200/90 leading-snug"></div>
+              <div id="kpi-parada" class="text-2xl md:text-4xl font-extrabold mono text-rose-400">–</div>
+              <div id="kpi-parada-fecha" class="text-xs text-rose-200/90 leading-snug"></div>
             </div>
           </div>
           <div id="kpi-ventana" class="mt-2 px-2 py-1 rounded border-l-4 border-amber-400 bg-amber-500/10 text-[11px] text-slate-200 leading-snug"></div>
           <div id="kpi-drop-rate" class="mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 mono">Ritmo hoy: –</div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex-1 flex flex-col justify-center">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
           <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Coca Codo + Rescate de Colombia</div>
           <div class="mt-2 flex items-baseline gap-3">
             <div>
@@ -856,7 +856,7 @@
           kpiDate.innerHTML = `Entraría alrededor del <span class="text-white font-bold">${fch(Z.entrada)}</span>` +
             (rgZ && rgZ[0] != null ? `<br><span class="font-normal text-slate-400">probable: ${Math.round(rgZ[0])} a ${rgZ[1] != null ? Math.round(rgZ[1]) + ' días' : 'más de 60 días'}</span>` : '');
         } else { kpiDays.textContent = 'Más de 60 días'; kpiDate.innerHTML = 'No entra en la zona crítica en 60 días'; }
-        kpiDays.className = 'text-3xl md:text-4xl font-extrabold mono text-amber-400';
+        kpiDays.className = 'text-4xl md:text-6xl font-extrabold mono text-amber-400';
         const roza = Z.minimo && !Z.paradaEnVentana && Z.minimo.cota < 2115.5;
         const kP = document.getElementById('kpi-parada'), kPF = document.getElementById('kpi-parada-fecha');
         if (Z.parada !== null) {
