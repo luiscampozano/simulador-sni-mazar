@@ -1,25 +1,25 @@
 {
-  "fecha_reporte": "LUNES 19 OCT 2026 (21h41)",
+  "fecha_reporte": "LUNES 19 OCT 2026 (23h40)",
   "cota_mazar": 2121.64,
   "caida_24h": -1.23,
   "caudal_mazar": 20.0,
-  "caudal_coca": 145.0,
+  "caudal_coca": 144.0,
   "importacion_colombia_mw": 0,
   "temp_costa_c": 28.5,
-  "demanda_base_mw": 4240,
+  "demanda_base_mw": 4400,
   "cortes_mw": 300,
-  "cota_amaluza": 1972.91,
-  "cota_sopladora": 1316.48,
+  "cota_amaluza": 1972.81,
+  "cota_sopladora": 1315.43,
   "k_mw_por_m3s": 13.72,
   "paute_7d_mw": 844,
   "fisica_periodo": "2026-10-09 a 2026-10-18",
   "hm3_por_metro": 5.2,
-  "demanda_atendida_mw": 4131,
-  "coca_codo_mw": 725,
+  "demanda_atendida_mw": 4122,
+  "coca_codo_mw": 720,
   "caudal_coca_fuente": "Cenace (generación medida de Coca Codo)",
   "termica_mw": 1270,
-  "otras_hidro_mw": 1300,
-  "generacion_firme_mw": 2570,
+  "otras_hidro_mw": 1290,
+  "generacion_firme_mw": 2560,
   "cenace_ok": true,
   "lluvia_paute": "auto",
   "lluvia_paute_mm": {
@@ -33,7 +33,7 @@
   },
   "sincronizado_con": {
     "simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
-    "datos_de": "2026-10-19T21:45-05:00",
+    "datos_de": "2026-10-19T23:39-05:00",
     "cota_hora": "2026-10-19T21:00:00-05:00"
   },
   "modelo": {
@@ -189,17 +189,17 @@
       ]
     },
     "rango_base": "caudal bajo",
-    "amaluzaCota": 1972.91,
-    "amaluzaRitmo": 0.696,
-    "amaluzaVolumen": 0.35,
+    "amaluzaCota": 1980.0,
+    "amaluzaRitmo": 0.0,
+    "amaluzaVolumen": null,
     "deltaDia": [
-      -201.3,
-      -6.3,
-      50.0,
-      42.4,
-      66.3,
-      76.1,
-      -27.1
+      -214.7,
+      -6.7,
+      53.4,
+      45.2,
+      70.7,
+      81.2,
+      -28.9
     ],
     "cutDias": [
       false,
@@ -464,41 +464,62 @@
     ],
     "serie_fecha": "2026-10-19",
     "prediccion": {
-      "dias_zona_2120": 3.1,
+      "dias_zona_2120": 1.6,
       "rango_zona_2120": [
-        2.4,
-        4.1
+        1.2,
+        2.2
       ],
-      "dias": 8.5,
+      "dias": 6.5,
       "rango": [
-        7.3,
-        33.9
+        5.4,
+        7.5
       ],
-      "ritmo_hoy_m_dia": -0.5
+      "ritmo_hoy_m_dia": -0.95,
+      "dias_critica": 5.5,
+      "rango_critica": [
+        4.8,
+        6.7
+      ],
+      "salida_critica": 13.3,
+      "parada_en_ventana": true,
+      "minimo_critica": {
+        "t": 7.0,
+        "cota": 2115.0
+      }
     },
     "probabilidades": {
       "pronostico": {
         "2120": {
-          "7": 0.947,
-          "14": 0.947,
+          "7": 1.0,
+          "14": 1.0,
+          "30": 1.0
+        },
+        "2116": {
+          "7": 0.789,
+          "14": 0.895,
           "30": 1.0
         },
         "2115": {
-          "7": 0.211,
-          "14": 0.632,
-          "30": 0.632
+          "7": 0.684,
+          "14": 0.842,
+          "30": 1.0
         }
       },
       "semana_seca": {
         "2120": {
-          "7": 0.947,
+          "7": 1.0,
           "14": 1.0,
           "30": 1.0
         },
+        "2116": {
+          "7": 0.842,
+          "14": 0.895,
+          "30": 1.0
+        },
         "2115": {
-          "7": 0.316,
-          "14": 0.737,
-          "30": 0.737
+          "7": 0.737,
+          "14": 0.895,
+          "30": 1.0
         }
       }
     }
