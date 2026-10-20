@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Mismo modelo que el simulador "Mazar y generación" (se calibra cada día con el historial de Celec Sur) -->
-  <script src="https://luiscampozano.github.io/simulador-mazar/modelo.js?v=20261020a"></script>
+  <script src="https://luiscampozano.github.io/simulador-mazar/modelo.js?v=20261020b"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -498,6 +498,15 @@
       </div>
     </div>
 
+    <!-- ¿Acertó el modelo? -->
+    <section id="ac-panel" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+      <h2 class="text-sm md:text-base font-bold text-white">¿Acertó el modelo?</h2>
+      <p class="text-[11px] text-slate-400">Cada 2 horas el robot guarda lo que el modelo dice para los próximos días y después lo compara con la cota real de Celec Sur a la misma hora.</p>
+      <div id="ac-hoy" class="px-3 py-2 rounded border-l-4 border-sky-400 bg-sky-500/10 text-xs text-slate-200 leading-snug"></div>
+      <div class="overflow-x-auto"><table id="ac-tbl" class="w-full text-xs text-slate-300"></table></div>
+      <p id="ac-resumen" class="text-[11px] text-slate-400 leading-snug"></p>
+    </section>
+
 
 
   </div>
@@ -686,6 +695,26 @@
       }
     }
 
+    function dibujarAciertos() {
+      const M = DATOS_OFICIALES_DIA.modelo || {}, ac = M.aciertos, aj = M.ajuste_info;
+      const panel = document.getElementById('ac-panel');
+      if (!ac || !ac.ultimo_1d) { panel.classList.add('hidden'); return; }
+      panel.classList.remove('hidden');
+      const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'], DS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+      const fh = s => { const d = new Date(s); return `${DS[d.getDay()]} ${d.getDate()} ${MES[d.getMonth()]} ${String(d.getHours()).padStart(2, '0')}:00`; };
+      const c2 = v => { const [e, d] = v.toFixed(2).split('.'); return e.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + d; };
+      const cm = v => (v >= 0 ? '+' : '−') + Math.round(Math.abs(v) * 100) + ' cm';
+      const u = ac.ultimo_1d;
+      const tono = Math.abs(u.err) < 0.15 ? 'acertó' : (u.err > 0 ? 'fue optimista' : 'fue pesimista');
+      document.getElementById('ac-hoy').innerHTML = `<b>Hace 24 horas</b> (${fh(u.pred_ts)}) el modelo dijo que a las ${fh(u.obj_ts).split(' ').pop()} de hoy Mazar estaría en <b>${c2(u.pred)} m</b>. Fue <b>${c2(u.real)} m</b>: diferencia ${cm(u.err)}, ${tono}.`;
+      const filas = (ac.recientes_1d || []).slice().reverse().map(v => `<tr class="border-t border-slate-800"><td class="py-1">${fh(v.pred_ts)}</td><td>${fh(v.obj_ts)}</td><td class="mono text-right pl-3">${c2(v.pred)}</td><td class="mono text-right pl-3">${c2(v.real)}</td><td class="mono text-right pl-3">${cm(v.err)}</td></tr>`).join('');
+      document.getElementById('ac-tbl').innerHTML = '<thead><tr class="text-slate-400 text-left"><th class="py-1">Dijo el</th><th>Para el</th><th class="text-right pl-3">Predijo</th><th class="text-right pl-3">Real</th><th class="text-right pl-3">Dif.</th></tr></thead><tbody>' + filas + '</tbody>';
+      const ph = ac.por_horizonte || {};
+      const txt = Object.keys(ph).map(h => `a ${h} día${h === '1' ? '' : 's'}: error medio ${Math.round(ph[h].error_medio_m * 100)} cm, sesgo ${cm(ph[h].sesgo_m)} (${ph[h].n} comparaciones, ${ph[h].dias} días)`).join(' · ');
+      document.getElementById('ac-resumen').innerHTML = 'Resumen — ' + txt + '. Sesgo positivo = el modelo dijo más alto de lo que fue (optimista).' +
+        (aj ? '<br><b>Autoajuste:</b> ' + (aj.factor !== 1 ? `la realidad bajó ${aj.ratio_mediana.toFixed(2).replace('.', ',')} veces lo predicho; el modelo corrige su bajada ×${aj.factor.toFixed(3).replace('.', ',')} (con ${aj.dias} días; la corrección crece a medida que se acumulan días).` : 'todavía pocos días comparados; sin corrección.') : '') +
+        '<br>Las comparaciones del 17 al 20 de octubre se reconstruyeron con los datos que el robot tenía en cada momento.';
+    }
     function updateSimulation() {
       const cotaHoy = DATOS_OFICIALES_DIA.cota_mazar;
       const colchonHoyMetros = Math.max(0.1, cotaHoy - COTA_CRITICA_SEGURA);
@@ -779,7 +808,7 @@
       const MOD = DATOS_OFICIALES_DIA.modelo || {};
       const ctxModelo = {
         cota: cotaHoy, inicio: new Date(), diaSemana0: MOD.diaSemana0, amaluzaCota: MOD.amaluzaCota, amaluzaRitmo: MOD.amaluzaRitmo,
-        deltaDia: MOD.deltaDia, cutDias: MOD.cutDias, cutPlan: MOD.cutPlan, serieMazar: MOD.serieMazar, serieCoca: MOD.serieCoca, horizonte: 60
+        deltaDia: MOD.deltaDia, cutDias: MOD.cutDias, cutPlan: MOD.cutPlan, ajuste: MOD.ajuste, serieMazar: MOD.serieMazar, serieCoca: MOD.serieCoca, horizonte: 60
       };
       function proyectar(importMW, wP, wC, serieM) {
         const R = ModeloMazar.simular({
@@ -807,6 +836,7 @@
           `<div class="grid grid-cols-[4.5rem_1fr] gap-x-3 gap-y-1 items-center"><span class="text-xs font-semibold text-slate-300">En ${H} días</span>${barra(pA[H], 'bg-sky-500')}<span></span>${barra(pB[H], 'bg-rose-500')}</div>`).join('');
         document.getElementById('prob-panel').classList.remove('hidden');
       }
+      dibujarAciertos();
       let diasSinColombia = proySin.cruce === null ? Infinity : proySin.cruce;
 
       const serieConColombia = [];
