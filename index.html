@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Mismo modelo que el simulador "Mazar y generación" (se calibra cada día con el historial de Celec Sur) -->
-  <script src="https://luiscampozano.github.io/simulador-mazar/modelo.js?v=20261019a"></script>
+  <script src="https://luiscampozano.github.io/simulador-mazar/modelo.js?v=20261020a"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -102,16 +102,21 @@
       <!-- Tarjeta 1: Cuenta regresiva de Mazar -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 relative overflow-hidden">
         <div class="flex items-center justify-between gap-2">
-          <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Días hasta el nivel mínimo (2.115 m)</span>
+          <span class="text-xs font-medium text-amber-300/90 uppercase tracking-wider">Días hasta la zona crítica (2.116 m)</span>
           <span id="kpi-colchon-badge" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-sky-500/15 text-sky-300 mono">Margen: –</span>
         </div>
-        <div class="mt-2 flex items-baseline gap-2">
-          <span id="kpi-days" class="text-3xl md:text-4xl font-extrabold mono text-amber-400">–</span>
+        <div class="mt-2 flex flex-wrap items-end gap-x-4 gap-y-2">
+          <div>
+            <span id="kpi-days" class="text-3xl md:text-4xl font-extrabold mono text-amber-400">–</span>
+            <div id="kpi-date" class="mt-1 text-xs font-semibold text-slate-300 leading-snug"></div>
+          </div>
+          <div class="px-3 py-2 rounded-xl border border-rose-500/50 bg-rose-500/10">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-rose-300">Parada de Mazar (2.115 m)</div>
+            <div id="kpi-parada" class="text-xl md:text-2xl font-extrabold mono text-rose-400">–</div>
+            <div id="kpi-parada-fecha" class="text-[11px] text-rose-200/90 leading-snug"></div>
+          </div>
         </div>
-        <div id="kpi-date" class="mt-1 text-xs font-semibold text-slate-300"></div>
-        <div id="kpi-range" class="mt-1 text-[11px] text-slate-400 leading-snug"></div>
-        <p class="mt-1 text-[11px] text-slate-400 leading-snug">A 2.115 m Mazar se queda sin reserva: Paute solo podría generar con el agua del río.</p>
-        <div id="kpi-zona" class="mt-1 text-[10px] text-slate-500 leading-snug"></div>
+        <div id="kpi-ventana" class="mt-2 px-2 py-1 rounded border-l-4 border-amber-400 bg-amber-500/10 text-[11px] text-slate-200 leading-snug"></div>
         <div id="kpi-drop-rate" class="mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 mono">Ritmo hoy: –</div>
       </div>
 
@@ -336,7 +341,8 @@
           <div class="flex flex-wrap items-baseline justify-between gap-2">
             <h2 class="text-sm font-bold text-white">Probabilidad de que Mazar llegue a…</h2>
             <select id="prob-umbral" onchange="updateSimulation()" class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
-              <option value="2115">2.115 m · nivel mínimo</option>
+              <option value="2116">2.116 m · zona crítica</option>
+              <option value="2115">2.115 m · parada de Mazar</option>
               <option value="2120">2.120 m · referencia de 2023–2024</option>
             </select>
           </div>
@@ -791,21 +797,6 @@
       const ritmoModelo = -(f0.qturb - f0.qin) * 0.0864 / ModeloMazar.areaEn(cotaHoy);
       const volModelo = -(f0.qturb - f0.qin) * 0.0864;
       const rangoModelo = ModeloMazar.rango(proyCon.R, MOD.rango_cuantiles, cotaHoy);
-      const kpiRange = document.getElementById('kpi-range');
-      // Zona de racionamiento (2.120 m): en 2023 (~2.121) y 2024 (~2.118) empezó ahí el racionamiento fuerte
-      {
-        const dd = proyCon.R.daily; let tz = cotaHoy <= 2120 ? 0 : null;
-        for (let k = 1; k < dd.length && tz === null; k++) if (dd[k].cota <= 2120) tz = dd[k - 1].t + (dd[k - 1].cota - 2120) / Math.max(1e-6, dd[k - 1].cota - dd[k].cota);
-        const kz = document.getElementById('kpi-zona');
-        const nota = 'En 2023 y 2024 el racionamiento fuerte empezó entre 2.118 y 2.121 m, pero no es un umbral oficial.';
-        if (tz === 0) kz.textContent = 'Referencia: Mazar ya está bajo 2.120 m. ' + nota;
-        else if (tz === null) kz.textContent = 'Referencia: no bajaría de 2.120 m en 60 días. ' + nota;
-        else {
-          const fz = new Date(); fz.setDate(fz.getDate() + Math.round(tz));
-          const mz = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][fz.getMonth()];
-          kz.textContent = `Referencia: bajaría de 2.120 m en ≈ ${tz < 10 ? tz.toFixed(1).replace('.', ',') : Math.round(tz)} días (${fz.getDate()} de ${mz}). ` + nota;
-        }
-      }
       // Panel de probabilidades (siempre con el pronóstico automático, y con una semana seca)
       if (MOD.ratios_percentiles && ModeloMazar.probabilidades) {
         const umbral = parseFloat(document.getElementById('prob-umbral').value);
@@ -829,33 +820,41 @@
       chartInstance.data.datasets[1].data = serieSinColombia;
       chartInstance.update();
 
-      if (!isFinite(diasHastaColapso)) {
-        kpiDays.textContent = 'Más de 60 días';
-        kpiDays.className = 'text-2xl md:text-3xl font-extrabold mono text-emerald-400';
-        kpiDate.innerHTML = 'Con este escenario <span class="text-emerald-300">no llega en 60 días</span>';
-        kpiDropRate.textContent = `Ritmo hoy: ${ritmoModelo >= 0 ? '+' : ''}${ritmoModelo.toFixed(2)} m/día (${volModelo.toFixed(1)} HM³/día)`;
-        kpiRange.textContent = (rangoModelo && rangoModelo[0] != null) ? `Rango probable: desde ${Math.round(rangoModelo[0])} días hasta más de 60` : '';
-        kpiDropRate.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 mono';
-      } else {
-        const diasRedondeados = Math.max(1.0, diasHastaColapso);
-        kpiDays.textContent = diasRedondeados.toFixed(1) + ' días';
-
-        const indiceDiaColapso = Math.min(fechasProyeccion.length - 1, Math.round(diasRedondeados));
-        const mesesCorto = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        const fechaColapso = new Date(); fechaColapso.setDate(fechaColapso.getDate() + Math.round(diasRedondeados));
-        const textoFechaColapso = diasRedondeados <= 20 ? fechasProyeccion[indiceDiaColapso] : `${String(fechaColapso.getDate()).padStart(2, '0')} ${mesesCorto[fechaColapso.getMonth()]}`;
-
-        if (diasRedondeados <= 7) {
-          kpiDays.className = 'text-3xl md:text-4xl font-extrabold mono text-rose-500';
-        } else if (diasRedondeados <= 13) {
-          kpiDays.className = 'text-3xl md:text-4xl font-extrabold mono text-amber-400';
+      // Zona crítica (2.116 m) y parada de Mazar (2.115 m), con el mismo cálculo que el otro simulador
+      {
+        const Z = ModeloMazar.zonaCritica(proyCon.R, cotaHoy);
+        const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        const DSEM = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+        const sc = DATOS_OFICIALES_DIA.sincronizado_con || {};
+        const base = sc.cota_hora && !isNaN(Date.parse(sc.cota_hora)) ? new Date(sc.cota_hora) : new Date();   // misma referencia que el otro simulador
+        const fch = t => { const f = new Date(base.getTime() + t * 86400000); return `${DSEM[f.getDay()]} ${f.getDate()} ${MES[f.getMonth()]}`; };
+        const nd = t => t < 10 ? t.toFixed(1) : String(Math.round(t));
+        const rgZ = ModeloMazar.rango(proyCon.R, MOD.rango_cuantiles, cotaHoy, ModeloMazar.COTA_ZC);
+        if (Z.entrada === 0) { kpiDays.textContent = '0 días'; kpiDate.innerHTML = 'Mazar ya está en la zona crítica'; }
+        else if (Z.entrada !== null) {
+          kpiDays.textContent = nd(Z.entrada) + ' días';
+          kpiDate.innerHTML = `Entraría alrededor del <span class="text-white font-bold">${fch(Z.entrada)}</span>` +
+            (rgZ && rgZ[0] != null ? `<br><span class="font-normal text-slate-400">probable: ${Math.round(rgZ[0])} a ${rgZ[1] != null ? Math.round(rgZ[1]) + ' días' : 'más de 60 días'}</span>` : '');
+        } else { kpiDays.textContent = 'Más de 60 días'; kpiDate.innerHTML = 'No entra en la zona crítica en 60 días'; }
+        kpiDays.className = 'text-3xl md:text-4xl font-extrabold mono text-amber-400';
+        const roza = Z.minimo && !Z.paradaEnVentana && Z.minimo.cota < 2115.5;
+        const kP = document.getElementById('kpi-parada'), kPF = document.getElementById('kpi-parada-fecha');
+        if (Z.parada !== null) {
+          kP.textContent = nd(Z.parada) + ' días';
+          kPF.innerHTML = `Pararía el <b>${fch(Z.parada)}</b>` + (roza ? `<br>antes roza ${Z.minimo.cota.toFixed(2)} m el ${fch(Z.minimo.t)}` : '');
         } else {
-          kpiDays.className = 'text-3xl md:text-4xl font-extrabold mono text-sky-400';
+          kP.textContent = '+60 días';
+          kPF.innerHTML = 'No para en 60 días' + (roza ? `<br>roza ${Z.minimo.cota.toFixed(2)} m el ${fch(Z.minimo.t)}` : '');
         }
-
-        kpiDate.innerHTML = `Llegaría alrededor del <span class="text-white font-bold">${textoFechaColapso}</span>`;
+        const kV = document.getElementById('kpi-ventana');
+        if (Z.entrada !== null) {
+          kV.classList.remove('hidden');
+          const ini = Z.entrada === 0 ? 'hoy' : 'el ' + fch(Z.entrada);
+          kV.innerHTML = '<b>Ventana crítica</b> (2.116 → 2.115 m): ' + (Z.paradaEnVentana
+            ? `desde ${ini} hasta la parada el ${fch(Z.parada)} · ${nd(Math.max(0, Z.parada - Z.entrada))} días`
+            : (Z.salida !== null ? `desde ${ini} hasta el ${fch(Z.salida)}, sin llegar a parar, si llueve lo previsto` : `desde ${ini}, sin llegar a parar en 60 días`));
+        } else kV.classList.add('hidden');
         kpiDropRate.textContent = `Ritmo hoy: ${ritmoModelo.toFixed(2)} m/día (${volModelo.toFixed(1)} HM³/día) · con lluvia prevista`;
-        kpiRange.textContent = rangoModelo ? `Rango probable: ${Math.round(rangoModelo[0])} a ${rangoModelo[1] != null ? Math.round(rangoModelo[1]) + ' días' : 'más de 60 días'} (mitad de las pruebas con fechas pasadas, 2023–2026)` : '';
         kpiDropRate.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 mono';
       }
 
@@ -908,7 +907,7 @@
         const def = tras.length ? tras.reduce((s, r) => s + r.deficit, 0) / tras.length : 0;
         const dem = tras.length ? tras.reduce((s, r) => s + r.demand, 0) / tras.length : demandaNetaAtender;
         const horas = def / dem * 24;
-        const f = new Date(); f.setDate(f.getDate() + Math.round(Rc.crossDay));
+        const sc4 = DATOS_OFICIALES_DIA.sincronizado_con || {}; const f = new Date((sc4.cota_hora && !isNaN(Date.parse(sc4.cota_hora)) ? Date.parse(sc4.cota_hora) : Date.now()) + Rc.crossDay * 86400000);
         const mes = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][f.getMonth()];
         kpiBlackoutHours.textContent = horas < 0.5 ? 'Menos de 1 h/día' : `≈ ${Math.round(horas)} h/día`;
         kpiBlackoutHours.className = 'text-3xl md:text-4xl font-extrabold mono ' + (horas >= 4 ? 'text-rose-400' : 'text-amber-400');
