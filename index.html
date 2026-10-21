@@ -46,6 +46,7 @@
     .slider-rose::-webkit-slider-thumb { background: #f43f5e !important; box-shadow: 0 0 10px rgba(244, 63, 94, 0.6) !important; }
     .slider-purple::-webkit-slider-thumb { background: #a855f7 !important; box-shadow: 0 0 10px rgba(168, 85, 247, 0.6) !important; }
     .slider-yellow::-webkit-slider-thumb { background: #eab308 !important; box-shadow: 0 0 10px rgba(234, 179, 8, 0.6) !important; }
+    .fuera { display: none !important; }
   </style>
 </head>
 <body class="min-h-screen p-3 md:p-6">
@@ -97,6 +98,13 @@
         </div>
       </div>
     </header>
+
+    <!-- PESTAÑAS: la principal queda igual; las otras dos solo muestran gráficos -->
+    <nav id="tabs-nav" class="flex flex-wrap gap-2" role="tablist" aria-label="Secciones">
+      <button type="button" role="tab" data-tab="sim" aria-selected="true" class="px-4 py-2 rounded-full text-sm font-semibold border bg-sky-500/20 text-sky-300 border-sky-500/50">Simulador</button>
+      <button type="button" role="tab" data-tab="comp" aria-selected="false" class="px-4 py-2 rounded-full text-sm font-semibold border bg-slate-900 text-slate-400 border-slate-700">2026 vs. 2024</button>
+      <button type="button" role="tab" data-tab="region" aria-selected="false" class="px-4 py-2 rounded-full text-sm font-semibold border bg-slate-900 text-slate-400 border-slate-700">Región de proyección</button>
+    </nav>
 
     <!-- TARJETAS DE DIAGNÓSTICO EJECUTIVO EN TIEMPO REAL -->
     <section class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-stretch">
@@ -497,6 +505,39 @@
     </section>
 
 
+
+    <!-- PESTAÑA: 2026 vs. 2024 -->
+    <section id="tab-comp" role="tabpanel" class="fuera bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 space-y-4">
+      <div>
+        <h2 class="text-lg md:text-xl font-extrabold text-white">📅 2026 vs. 2024, el año de los cortes</h2>
+        <p id="cmp-txt" class="text-sm md:text-base text-slate-300 mt-2 max-w-3xl leading-relaxed">Cargando el historial de Celec Sur…</p>
+      </div>
+      <div class="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-400">
+        <span class="inline-flex items-center gap-1.5"><span class="w-4 h-[3px] rounded bg-sky-400"></span>2026</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-4 border-t-2 border-dashed border-sky-400"></span>proyección del simulador</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-4 h-[3px] rounded bg-amber-500"></span>2024</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-rose-500/20"></span>cortes de luz 2024</span>
+      </div>
+      <div class="relative h-[300px] md:h-[380px]"><canvas id="cmp-chart"></canvas></div>
+      <div class="overflow-x-auto"><table id="cmp-tbl" class="w-full text-sm"></table></div>
+      <p id="cmp-nota" class="text-xs text-slate-400 leading-relaxed"></p>
+    </section>
+
+    <!-- PESTAÑA: Región de proyección -->
+    <section id="tab-region" role="tabpanel" class="fuera bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 space-y-4">
+      <div>
+        <h2 class="text-lg md:text-xl font-extrabold text-white">🌊 Región de proyección</h2>
+        <p class="text-sm text-slate-400 mt-2 max-w-3xl leading-relaxed">La franja reúne los caminos posibles de Mazar con los datos de hoy: tres escenarios del río Coca (sube como se pronostica, se queda igual o baja 15 %) combinados con lluvia o semana seca en la cuenca del Paute. La línea gruesa es la proyección del simulador; las punteadas, los demás escenarios.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="bg-slate-950/60 border border-rose-500/30 rounded-xl p-4"><div class="text-[11px] uppercase tracking-wider font-semibold text-rose-400">Lo más pronto · 2.116</div><div id="reg-temprano" class="mono text-2xl md:text-3xl font-bold text-rose-300 mt-1">–</div><p id="reg-temprano-txt" class="text-xs text-slate-400 mt-1"></p></div>
+        <div class="bg-slate-950/60 border border-sky-500/40 rounded-xl p-4"><div class="text-[11px] uppercase tracking-wider font-semibold text-sky-400">Proyección del simulador</div><div id="reg-prin" class="mono text-2xl md:text-3xl font-bold text-sky-300 mt-1">–</div><p id="reg-prin-txt" class="text-xs text-slate-400 mt-1">Coca según GloFAS y lluvia pronosticada en el Paute</p></div>
+        <div id="reg-tarde-box" class="bg-slate-950/60 border border-emerald-500/30 rounded-xl p-4"><div class="text-[11px] uppercase tracking-wider font-semibold text-emerald-400">Lo más tarde · 2.116</div><div id="reg-tarde" class="mono text-2xl md:text-3xl font-bold text-emerald-300 mt-1">–</div><p id="reg-tarde-txt" class="text-xs text-slate-400 mt-1"></p></div>
+      </div>
+      <div class="relative h-[300px] md:h-[380px]"><canvas id="reg-chart"></canvas></div>
+      <div class="overflow-x-auto"><table id="reg-tbl" class="w-full text-sm"></table></div>
+      <p class="text-xs text-slate-400 leading-relaxed">La región no es una probabilidad: muestra entre qué fechas se mueve la zona crítica según lo que haga el río Coca, la variable que más cambia la fecha, y la lluvia en el Paute. Las demás variables (demanda, cortes, Colombia, térmica) quedan como hoy. Se recalcula con cada actualización del robot.</p>
+    </section>
 
     <footer class="text-center text-xs text-slate-400 border-t border-slate-800 pt-3 pb-1">Simulador desarrollado por <b class="text-slate-200">Ing. Luis Campozano, MBA</b> · datos de Celec Sur, Cenace, Open-Meteo y GloFAS · se actualiza cada 2 horas</footer>
   </div>
@@ -1026,5 +1067,6 @@
       cargarDatosDiariosJSON();
     });
   </script>
+  <script src="pestanas.js?v=20261021a"></script>
 </body>
 </html>
