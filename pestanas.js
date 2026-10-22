@@ -143,7 +143,7 @@
     const sep = d.termica_mw != null && d.otras_hidro_mw != null && Math.abs(firme - (d.termica_mw + d.otras_hidro_mw)) < 5;
     const qC0 = d.caudal_coca, ccs0 = Math.min(1350, Math.round(qC0 * 4.79));
     const ctx = Object.assign({ cota: d.cota_mazar, inicio: new Date(), diaSemana0: M.diaSemana0, amaluzaCota: M.amaluzaCota, amaluzaRitmo: M.amaluzaRitmo,
-      deltaDia: M.deltaDia, cutDias: M.cutDias, cutPlan: M.cutPlan, ajuste: M.ajuste, serieMazar: M.serieMazar, serieCoca: M.serieCoca, horizonte: 60 }, extra || {});
+      deltaDia: M.deltaDia, cutDias: M.cutDias, cutPlan: M.cutPlan, ajuste: M.ajuste, serieMazar: M.serieMazar, serieCoca: M.serieCoca, memoria: M.memoria, horizonte: 60 }, extra || {});
     return ModeloMazar.simular({ qMazar: d.caudal_mazar, qCoca, wPaute: d.lluvia_paute || "auto", wCoca, demanda: d.demanda_base_mw + sobre, cut: d.cortes_mw,
       imp: d.importacion_colombia_mw, therm: sep ? d.termica_mw : firme, other: sep ? d.otras_hidro_mw : 0,
       ccsFn: d.coca_codo_mw ? null : (q => Math.min(1200, ccs0 * q / qC0)) }, ctx);
