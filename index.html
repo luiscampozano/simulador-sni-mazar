@@ -915,6 +915,24 @@
             ? `desde ${ini} hasta la parada el ${fch(Z.parada)} · ${nd(Math.max(0, Z.parada - Z.entrada))} días`
             : (Z.salida !== null ? `desde ${ini} hasta el ${fch(Z.salida)}, sin llegar a parar, si llueve lo previsto` : `desde ${ini}, sin llegar a parar en 60 días`));
         } else kV.classList.add('hidden');
+        // Número grande oficial (valores del día sin tocar): promedio PONDERADO de las fechas de las corridas de las
+        // últimas 48 h (antigüedad y acierto a la cota real), el mismo del otro simulador. No salta con cada corrida.
+        const NUM = (MOD.prediccion || {}).numero, D0 = DATOS_OFICIALES_DIA;
+        const igual = (x, y) => Math.abs(parseFloat(x) - parseFloat(y)) < 0.051;
+        const oficial = NUM && igual(qMazar, D0.caudal_mazar) && igual(qCoca, D0.caudal_coca) && igual(importColombiaMW, D0.importacion_colombia_mw)
+          && igual(tempCosta, D0.temp_costa_c) && igual(demandaBase, D0.demanda_base_mw) && igual(cortesMW, D0.cortes_mw)
+          && lluviaPaute === (D0.lluvia_paute || lluviaPaute) && lluviaCoca === (D0.lluvia_coca || lluviaCoca);
+        if (oficial) {
+          const c = NUM.critica, p = NUM.parada;
+          const rgT = r => r[1] >= 59 ? `${Math.round(r[0])} a más de 60 días` : `${Math.round(r[0])} a ${Math.round(r[1])} días`;
+          const nota = `<br><span class="font-normal text-slate-400">promedio ponderado de ${NUM.corridas} corridas (48 h) · rango: ${rgT(c.rango)}</span>`;
+          if (c.dias >= 59) { kpiDays.textContent = 'Más de 60 días'; kpiDate.innerHTML = 'No entra en la zona crítica en 60 días' + nota; }
+          else { kpiDays.textContent = nd(c.dias) + ' días'; kpiDate.innerHTML = `Entraría alrededor del <span class="text-white font-bold">${fch(c.dias)}</span>` + nota; }
+          if (p.dias >= 59) { kP.textContent = '+60 días'; kPF.innerHTML = 'No para en 60 días'; }
+          else { kP.textContent = nd(p.dias) + ' días'; kPF.innerHTML = `Pararía el <b>${fch(p.dias)}</b>`; }
+          if (c.dias < 59) { kV.classList.remove('hidden'); kV.innerHTML = `<b>Ventana crítica</b> (2.116 → 2.115 m): desde el ${fch(c.dias)}` + (p.dias < 59 ? ` hasta la parada el ${fch(p.dias)}` : ', sin llegar a parar en 60 días'); }
+          else kV.classList.add('hidden');
+        }
         kpiDropRate.textContent = `Ritmo hoy: ${ritmoModelo.toFixed(2)} m/día (${volModelo.toFixed(1)} HM³/día) · con lluvia prevista`;
         kpiDropRate.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 mono';
       }
@@ -1067,6 +1085,6 @@
       cargarDatosDiariosJSON();
     });
   </script>
-  <script src="pestanas.js?v=20261021m"></script>
+  <script src="pestanas.js?v=20261021n"></script>
 </body>
 </html>
