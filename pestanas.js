@@ -150,6 +150,20 @@
       ccsFn: d.coca_codo_mw ? null : (q => Math.min(1200, ccs0 * q / qC0)) }, ctx);
   }
   function correrBase() { if (!D || !window.ModeloMazar) return null; ModeloMazar.configurar(D.modelo); return correr(D.caudal_coca, D.lluvia_coca || "auto"); }
+  // Escenarios de la región (Coca × Paute) para el panel de cortes de la pestaña principal
+  function escenariosRegion() {
+    const M = D.modelo || {}, q = D.caudal_coca, q15 = Math.round(q * 0.85), uno = new Array(61).fill(1);
+    ModeloMazar.configurar(D.modelo);
+    const coca = [{ q, w: D.lluvia_coca || "auto", ex: {} }, { q, w: "auto", ex: { serieCoca: uno } }, { q: q15, w: "auto", ex: { serieCoca: uno } }];
+    const paute = [{}];
+    if (M.serieMazarSeca) paute.push({ serieMazar: M.serieMazarSeca });
+    const out = [];
+    for (const c of coca) for (const p of paute) out.push(correr(c.q, c.w, Object.assign({}, c.ex, p)));
+    return out;
+  }
+  function publicarEscenarios() {
+    try { if (!D || !window.ModeloMazar) return; window.ESC_CORTES = escenariosRegion(); if (window.pintarCortes) window.pintarCortes(); } catch (e) { }
+  }
   function region() {
     const M = D.modelo || {}, q = D.caudal_coca, q15 = Math.round(q * 0.85), uno = new Array(61).fill(1), cota = D.cota_mazar, hoy = new Date();
     ModeloMazar.configurar(D.modelo);
@@ -219,7 +233,7 @@
     }));
     window.addEventListener("hashchange", () => mostrar(actual()));
     mostrar(actual());
-    fetch("./datos_sni.json?t=" + Date.now()).then(r => r.ok ? r.json() : null).then(j => { if (j && j.cota_mazar) { D = j; dibujar(actual()); } }).catch(() => { });
+    fetch("./datos_sni.json?t=" + Date.now()).then(r => r.ok ? r.json() : null).then(j => { if (j && j.cota_mazar) { D = j; dibujar(actual()); publicarEscenarios(); } }).catch(() => { });
     historial().then(j => { if (j) { HISTD = j; dibujar(actual()); } });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar); else iniciar();
