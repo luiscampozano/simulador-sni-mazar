@@ -164,7 +164,11 @@
     const pr = E.find(e => e.principal), temprano = conE[0], tarde = E.some(e => e.Z.entrada === null) ? null : conE[conE.length - 1];
     $("reg-temprano").textContent = temprano ? fecha(temprano.Z.entrada) : "no entra";
     $("reg-temprano-txt").textContent = temprano ? `Coca ${temprano.coca.txt.replace(" (hoy)", "")} y ${temprano.paute.txt}` : "en ningún escenario en 60 días";
-    $("reg-prin").textContent = pr.Z.entrada !== null ? fecha(pr.Z.entrada) : "más de 60 días";
+    const NUM = (M.prediccion || {}).numero;   // mismo número grande que la pestaña principal
+    const t0n = D.sincronizado_con && D.sincronizado_con.cota_hora ? new Date(D.sincronizado_con.cota_hora) : hoy;
+    const fechaN = t => { const d = new Date(t0n.getTime() + t * 86400000); return `${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}`; };
+    $("reg-prin").textContent = NUM ? (NUM.critica.dias >= 59 ? "más de 60 días" : fechaN(NUM.critica.dias)) : (pr.Z.entrada !== null ? fecha(pr.Z.entrada) : "más de 60 días");
+    if (NUM) { $("reg-prin-txt").textContent = "Igual que el número grande: promedio ponderado de las corridas de las últimas 48 h"; $("reg-tarde-box").classList.remove("fuera"); }
     const mismo = tarde && tarde === pr;
     $("reg-tarde-box").classList.toggle("fuera", !!mismo);
     $("reg-prin-txt").textContent = "Coca según GloFAS y lluvia pronosticada en el Paute" + (mismo ? ". Hoy es también el escenario más favorable." : "");
