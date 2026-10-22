@@ -19,11 +19,11 @@
 
   /* ---------- pestañas ---------- */
   function mostrar(tab) {
-    if (!["sim", "comp", "region"].includes(tab)) tab = "sim";
+    if (tab !== "sim" && !document.getElementById("tab-" + tab)) tab = "sim";
     const wrap = $("tabs-nav").parentNode;
     [...wrap.children].forEach(n => {
       if (n.tagName === "HEADER" || n.tagName === "FOOTER" || n.id === "tabs-nav") return;
-      const esPanel = n.id === "tab-comp" || n.id === "tab-region";
+      const esPanel = !!n.id && n.id.startsWith("tab-");
       n.classList.toggle("fuera", tab === "sim" ? esPanel : n.id !== "tab-" + tab);
     });
     document.querySelectorAll("#tabs-nav button").forEach(b => {
@@ -36,6 +36,7 @@
   function dibujar(tab) {
     if (tab === "comp" && D && HISTD) comparacion();
     if (tab === "region" && D && window.ModeloMazar) region();
+    if (window.GEN) window.GEN.dibujar(tab);   // pestañas de generación y clima (generacion.js)
   }
   const actual = () => (location.hash || "").replace("#", "") || "sim";
 
