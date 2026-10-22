@@ -539,7 +539,7 @@
       <p class="text-xs text-slate-400 leading-relaxed">La región no es una probabilidad: muestra entre qué fechas se mueve la zona crítica según lo que haga el río Coca, la variable que más cambia la fecha, y la lluvia en el Paute. Las demás variables (demanda, cortes, Colombia, térmica) quedan como hoy. Se recalcula con cada actualización del robot.</p>
     </section>
 
-    <footer class="text-center text-xs text-slate-400 border-t border-slate-800 pt-3 pb-1">Simulador desarrollado por <b class="text-slate-200">Ing. Luis Campozano, MBA</b> · datos de Celec Sur, Cenace, Open-Meteo y GloFAS · se actualiza cada 2 horas</footer>
+    <footer class="text-center text-xs text-slate-400 border-t border-slate-800 pt-3 pb-1">Simulador desarrollado por <b class="text-slate-200">Ing. Luis Campozano, MBA</b> · datos de Celec Sur, Cenace, Inamhi, Open-Meteo y GloFAS · se actualiza cada 2 horas</footer>
   </div>
 
   <script>
@@ -1085,6 +1085,13 @@
       cargarDatosDiariosJSON();
     });
   </script>
-  <script src="pestanas.js?v=20261021n"></script>
+  <style>
+    :root { --g-ink:#e2e8f0; --g-muted:#94a3b8; --g-line:#334155; --g-soft:rgba(2,6,23,.55); --g-real:#38bdf8; --g-mod:#94a3b8; --g-therm:#fb923c; --g-col:#818cf8; --g-ok:#34d399; --g-warn:#fbbf24; --g-crit:#fb7185; --g-on:#0f172a; --g-mono:ui-monospace,SFMono-Regular,Menlo,monospace; --g-t1:#c2410c; --g-t2:#fb923c; --g-t3:#fcd34d; --g-t4:#fef3c7; }
+  </style>
+  <script>window.GEN_CFG = { url: "https://luiscampozano.github.io/simulador-mazar/registro/generacion.json", nav: "#tabs-nav", despues: "#tab-region",
+    panel: "bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 space-y-4 text-slate-200", h2: "text-lg md:text-xl font-extrabold text-white", lede: "text-sm text-slate-400 leading-relaxed",
+    btn: "px-4 py-2 rounded-full text-sm font-semibold border bg-slate-900 text-slate-400 border-slate-700" };</script>
+  <script src="https://luiscampozano.github.io/simulador-mazar/generacion.js?v=20261022a"></script>
+  <script src="pestanas.js?v=20261022a"></script>
 </body>
 </html>
