@@ -694,7 +694,7 @@
         const ahorroCol = 100 / K_PAUTE;
         const elA = document.getElementById('txt-ahorro-col'); if (elA) elA.textContent = '~' + ahorroCol.toFixed(1).replace('.', ',') + ' m³/s';
         const elB = document.getElementById('txt-ahorro-col-hm3'); if (elB) elB.textContent = (ahorroCol * 0.0864).toFixed(2).replace('.', ',') + ' millones de m³/día';
-        const elK = document.getElementById('txt-k-paute'); if (elK) elK.textContent = K_PAUTE.toFixed(1).replace('.', ',') + ' MW por cada m³/s que sale de Mazar (Celec Sur, ' + (DATOS_OFICIALES_DIA.fisica_periodo || 'últimos días') + '); Paute generó en promedio ' + (DATOS_OFICIALES_DIA.paute_7d_mw || '—') + ' MW en los últimos 7 días';
+        const elK = document.getElementById('txt-k-paute'); if (elK) elK.textContent = K_PAUTE.toFixed(1).replace('.', ',') + ' MW por cada m³/s que sale de Mazar (Celec Sur, ' + (DATOS_OFICIALES_DIA.fisica_periodo || 'últimos días') + '); Paute generó en promedio ' + (DATOS_OFICIALES_DIA.paute_7d_mw || '—') + ' MW en promedio ponderado de los últimos días (los recientes pesan más)';
 
         document.getElementById('header-timestamp').textContent = `REPORTE OFICIAL EN VIVO: ${DATOS_OFICIALES_DIA.fecha_reporte}`;
         document.getElementById('sync-status-badge').textContent = '✅ Sincronizado con datos_sni.json de hoy';
