@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Mismo modelo que el simulador "Mazar y generación" (se calibra cada día con el historial de Celec Sur) -->
-  <script src="https://luiscampozano.github.io/simulador-mazar/modelo.js?v=20261021m"></script>
+  <script src="https://luiscampozano.github.io/simulador-mazar/modelo.js?v=20261022b"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -131,15 +131,17 @@
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-          <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Coca Codo + Rescate de Colombia</div>
+          <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Coca Codo + Rescate de Colombia · <span class="text-sky-300">simulado</span></div>
           <div class="mt-2 flex items-baseline gap-3">
             <div>
               <span id="kpi-ccs-mw" class="text-2xl md:text-3xl font-extrabold mono text-sky-400">815 MW</span>
               <span class="text-[11px] text-slate-400 block">Coca Codo</span>
+              <span id="kpi-ccs-real" class="text-[11px] text-slate-300 block" title="Último dato real de Cenace"></span>
             </div>
             <div class="border-l border-slate-800 pl-3">
               <span id="kpi-col-mw" class="text-2xl md:text-3xl font-extrabold mono text-yellow-400">+250 MW</span>
               <span class="text-[11px] text-yellow-300/80 block">🇨🇴 Colombia</span>
+              <span id="kpi-col-real" class="text-[11px] text-slate-300 block" title="Último dato real de Cenace"></span>
             </div>
           </div>
           <div id="kpi-paute-req" class="mt-1.5 text-xs text-slate-300">
@@ -155,8 +157,8 @@
         <!-- Cortes si Mazar llega a 2.115 m + balance de hoy (compacto) -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
           <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Cortes si Mazar llega a 2.115 m</div>
-          <div class="mt-1"><span id="kpi-blackout-hours" class="text-2xl md:text-3xl font-extrabold mono text-amber-400">–</span></div>
-          <div id="kpi-blackout-status" class="mt-1 text-xs font-semibold text-amber-300 leading-snug">Calculando…</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Horas de corte el primer día, en 3 escenarios</div>
+          <div id="kpi-cortes-esc" class="mt-1 grid gap-0.5 text-sm">Calculando…</div>
           <div class="mt-2 pt-2 border-t border-slate-800 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-300">
             <span>Balance hoy (sin vaciar Mazar): <span id="kpi-deficit" class="font-extrabold mono text-rose-400">–</span></span>
             <span id="kpi-demand-total">Demanda Neta a Cubrir: –</span>
@@ -411,10 +413,10 @@
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2">
               <div>
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">
-                  Despacho del SNI en Tiempo Real (MW)
+                  Despacho del SNI simulado (MW)
                 </h4>
                 <p class="text-[11px] text-slate-400 mt-0.5">
-                  Cómo se cubre la demanda hoy y cuánto alivio da la línea de Colombia
+                  Cómo el simulador reparte la demanda de hoy con los valores de arriba. Lo medido por Cenace está en las pestañas de generación.
                 </p>
               </div>
 
@@ -804,7 +806,7 @@
       if (DATOS_OFICIALES_DIA.coca_codo_mw && Math.abs(qCoca - DATOS_OFICIALES_DIA.caudal_coca) < 0.6) {
         ccsMW = DATOS_OFICIALES_DIA.coca_codo_mw;
         alertaSedimentos = false;
-        sedimentBadge.textContent = 'Generación medida por Cenace: ' + ccsMW + ' MW';
+        sedimentBadge.textContent = 'Simulado con los datos de hoy: ' + ccsMW + ' MW';
         sedimentBadge.className = 'mt-1.5 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20';
       }
 
@@ -933,6 +935,8 @@
           if (c.dias < 59) { kV.classList.remove('hidden'); kV.innerHTML = `<b>Ventana crítica</b> (2.116 → 2.115 m): desde el ${fch(c.dias)}` + (p.dias < 59 ? ` hasta la parada el ${fch(p.dias)}` : ', sin llegar a parar en 60 días'); }
           else kV.classList.add('hidden');
         }
+        window._BASE_ACT = base;
+        window._DIA_ACT = oficial ? (NUM.parada.dias >= 59 ? null : NUM.parada.dias) : Z.parada;
         kpiDropRate.textContent = `Ritmo hoy: ${ritmoModelo.toFixed(2)} m/día (${volModelo.toFixed(1)} HM³/día) · con lluvia prevista`;
         kpiDropRate.className = 'mt-2 inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 mono';
       }
@@ -973,24 +977,9 @@
 
       // Tarjeta 4: cortes si Mazar llega a 2.115 m y aporte de Colombia (modelo compartido)
       const kpiColSaved = document.getElementById('kpi-colombia-saved');
-      const kpiBlackoutHours = document.getElementById('kpi-blackout-hours');
-      const kpiBlackoutStatus = document.getElementById('kpi-blackout-status');
       const Rc = proyCon.R;
-      const CT = ModeloMazar.cortesTrasParada(Rc);
-      if (!CT) {
-        kpiBlackoutHours.textContent = 'No llega';
-        kpiBlackoutHours.className = 'text-2xl md:text-3xl font-extrabold mono text-emerald-400';
-        kpiBlackoutStatus.textContent = 'Con este escenario Mazar no toca 2.115 m en 60 días, así que no harían falta cortes por Mazar.';
-        kpiBlackoutStatus.className = 'mt-1 text-xs font-semibold text-emerald-300 leading-snug';
-      } else {
-        const sc4 = DATOS_OFICIALES_DIA.sincronizado_con || {}; const f = new Date((sc4.cota_hora && !isNaN(Date.parse(sc4.cota_hora)) ? Date.parse(sc4.cota_hora) : Date.now()) + CT.dia * 86400000);
-        const mes = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][f.getMonth()];
-        const h1 = v => v.toFixed(1).replace('.', ',');
-        kpiBlackoutHours.textContent = `≈ ${h1(CT.primerH)} h/día`;
-        kpiBlackoutHours.className = 'text-2xl md:text-3xl font-extrabold mono ' + (CT.primerH >= 4 ? 'text-rose-400' : 'text-amber-400');
-        kpiBlackoutStatus.textContent = `Desde el ${f.getDate()} de ${mes}, Paute solo podría usar el agua que trae el río: el primer día faltarían ≈ ${Math.round(CT.primerMW)} MW (≈ ${h1(CT.primerH)} h de corte para todo el país) y la semana siguiente ≈ ${h1(CT.semanaH)} h/día en promedio, si llueve lo previsto. Hoy ese hueco se cubre vaciando Mazar.`;
-        kpiBlackoutStatus.className = 'mt-1 text-xs font-semibold text-amber-300 leading-snug';
-      }
+      window._R_ACT = Rc;
+      if (window.pintarCortes) window.pintarCortes();
       // Aporte de Colombia: días que gana Mazar con la importación actual y con 300 MW
       const con300 = proyectar(300).cruce;
       const fmtD = d => d === null ? 'más de 60' : Math.round(d);
@@ -1091,7 +1080,43 @@
   <script>window.GEN_CFG = { url: "https://luiscampozano.github.io/simulador-mazar/registro/generacion.json", nav: "#tabs-nav", despues: "#tab-region",
     panel: "bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 space-y-4 text-slate-200", h2: "text-lg md:text-xl font-extrabold text-white", lede: "text-sm text-slate-400 leading-relaxed",
     btn: "px-4 py-2 rounded-full text-sm font-semibold border bg-slate-900 text-slate-400 border-slate-700" };</script>
-  <script src="https://luiscampozano.github.io/simulador-mazar/generacion.js?v=20261022a"></script>
-  <script src="pestanas.js?v=20261022a"></script>
+  <script src="https://luiscampozano.github.io/simulador-mazar/generacion.js?v=20261022b"></script>
+  <script>
+    // Cortes al tocar 2.115 m en 3 escenarios: pesimista y optimista (escenarios de la pestaña "Región de proyección",
+    // pestanas.js) y el del simulador (misma fecha de parada que el número grande).
+    function pintarCortes() {
+      const R = window._R_ACT, box = document.getElementById('kpi-cortes-esc'); if (!R || !box) return;
+      const base = window._BASE_ACT || new Date();
+      const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      const DSEM = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+      const fch = t => { const f = new Date(base.getTime() + t * 86400000); return `${DSEM[f.getDay()]} ${f.getDate()} ${MES[f.getMonth()]}`; };
+      const h1 = v => v.toFixed(1).replace('.', ',');
+      const act = { R, dia: window._DIA_ACT !== undefined ? window._DIA_ACT : R.crossDay };
+      const todos = [act].concat((window.ESC_CORTES || []).map(x => ({ R: x, dia: x.crossDay })));
+      const cruce = x => x.dia === null ? Infinity : x.dia;
+      const ord = todos.slice().sort((a, b) => cruce(a) - cruce(b));
+      const fila = (lbl, x, fuerte) => {
+        const CT = x.dia === null ? null : (ModeloMazar.cortesDesde ? ModeloMazar.cortesDesde(x.R, x.dia) : (x.R.crossDay !== null ? ModeloMazar.cortesTrasParada(x.R) : null));
+        const col = !CT ? 'text-emerald-400' : (CT.primerH >= 4 ? 'text-rose-400' : 'text-amber-400');
+        const tip = CT ? `${lbl}: desde el ${fch(CT.dia)} faltarían ≈ ${Math.round(CT.primerMW)} MW el primer día (≈ ${h1(CT.primerH)} h de corte) y ≈ ${h1(CT.semanaH)} h/día en promedio la semana siguiente`
+                       : `${lbl}: Mazar no llega a 2.115 m en 60 días`;
+        return `<div class="flex items-baseline justify-between gap-2" title="${tip}"><span class="${fuerte ? 'text-slate-100 font-semibold' : 'text-slate-300'}">${lbl} <span class="text-slate-400 font-normal text-xs">${CT ? fch(CT.dia) : 'no llega en 60 días'}</span></span>` +
+               `<span class="mono font-extrabold ${col}">${CT ? '≈ ' + h1(CT.primerH) + ' h' : 'sin cortes'}</span></div>`;
+      };
+      box.innerHTML = fila('Pesimista', ord[0]) + fila('Simulador', act, true) + fila('Optimista', ord[ord.length - 1]);
+    }
+    // Último dato real de Cenace bajo los números simulados de Coca Codo y Colombia
+    function pintarReal() {
+      if (!window.GEN || !window.GEN.real) return;
+      window.GEN.real(r => {
+        const a = document.getElementById('kpi-ccs-real'), b = document.getElementById('kpi-col-real');
+        if (a && r.ccs) a.innerHTML = `Real: <b class="mono text-sky-300">${r.ccs.mw.toLocaleString('es-EC')} MW</b> <span class="text-slate-500">(${r.ccs.txt})</span>`;
+        if (b && r.col) b.innerHTML = `Real: <b class="mono text-yellow-300">${r.col.mw.toLocaleString('es-EC')} MW</b> <span class="text-slate-500">(${r.col.txt})</span>`;
+      });
+    }
+    pintarCortes();
+    if (document.readyState === 'complete') pintarReal(); else window.addEventListener('load', pintarReal);
+  </script>
+  <script src="pestanas.js?v=20261022b"></script>
 </body>
 </html>
