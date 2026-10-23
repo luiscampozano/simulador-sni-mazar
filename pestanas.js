@@ -1,4 +1,4 @@
-/* Pestañas "2026 vs. 2024" y "Región de proyección" del simulador "Proyección del embalse Mazar".
+/* Pestañas "2026 vs. años anteriores" y "Región de proyección" del simulador "Proyección del embalse Mazar".
    Solo leen datos (datos_sni.json y el historial diario de Celec Sur que guarda el otro simulador)
    y usan el mismo modelo (modelo.js); no cambian nada de la pestaña principal. */
 (function () {
@@ -12,10 +12,11 @@
   const sgn = (v, d = 1) => (v >= 0 ? "+" : "−") + f(Math.abs(v), d);
   const HIST_URLS = ["https://raw.githubusercontent.com/luiscampozano/simulador-mazar/main/historial/celec_diario.json",
     "https://luiscampozano.github.io/simulador-mazar/historial/celec_diario.json"];
-  const CORTES24 = ["2024-09-23", "2024-12-20"];   // cortes de luz nacionales de 2024
+  const HISTV_URLS = ["https://luiscampozano.github.io/simulador-mazar/historial/celec_2010_2022.json",
+    "https://raw.githubusercontent.com/luiscampozano/simulador-mazar/main/historial/celec_2010_2022.json"];
   const ZC = 2116, PARADA = 2115;
   const C = { sky: "#38bdf8", amber: "#f59e0b", rose: "#f43f5e", emerald: "#10b981", slate: "#94a3b8", grid: "rgba(51, 65, 85, 0.3)", ink: "#e2e8f0" };
-  let D = null, HISTD = null, chComp = null, chReg = null;
+  let D = null, HISTD = null, HISTV = null, chComp = null, chReg = null;
 
   /* ---------- pestañas ---------- */
   function mostrar(tab) {
@@ -81,59 +82,167 @@
     }
   });
 
-  /* ---------- 2026 vs. 2024 ---------- */
-  function comparacion() {
-    const cota = D.cota_mazar;
-    const hoy = D.sincronizado_con && D.sincronizado_con.cota_hora ? new Date(D.sincronizado_con.cota_hora) : new Date();
-    const y0 = hoy.getFullYear();
-    const c = k => HISTD[k] && HISTD[k].c;
-    const mismo24 = new Date(2024, hoy.getMonth(), hoy.getDate());
-    const hace = (d, n) => { const x = new Date(d); x.setDate(x.getDate() - n); return iso(x); };
-    const c24 = c(iso(mismo24));
-    const dias = []; for (let d = new Date(2000, 6, 1); d <= new Date(2000, 11, 31); d.setDate(d.getDate() + 1)) dias.push(new Date(d));
-    const lab = dias.map(d => d.getDate() + " " + MON[d.getMonth()]);
-    const val = y => dias.map(d => c(iso(new Date(y, d.getMonth(), d.getDate()))) || null);
-    const v24 = val(2024);
-    const iHoy = dias.findIndex(d => d.getMonth() === hoy.getMonth() && d.getDate() === hoy.getDate());
-    const v26 = val(y0).map((v, i) => i < iHoy ? v : (i === iHoy ? cota : null));
-    let igual = null;
-    for (let i = 0; i < dias.length; i++) if (v24[i] != null && v24[i] <= cota) { igual = new Date(2024, dias[i].getMonth(), dias[i].getDate()); break; }
-    const ventaja = igual ? Math.round((mismo24 - igual) / 86400000) : null;
-    let iMin = 0; v24.forEach((v, i) => { if (v != null && v < v24[iMin]) iMin = i; });
-    const bajo = v24.filter(v => v != null && v < PARADA).length;
+  /* ---------- 2026 vs. años anteriores ---------- */
+  const CORTES = {
+    2023: [["2023-10-27", "2023-12-19"]],
+    2024: [["2024-04-15", "2024-04-30"], ["2024-09-23", "2024-12-20"]],
+  };
+  const CORTES_TXT = {
+    2023: "del 27 de octubre al 19 de diciembre de 2023",
+    2024: "del 15 al 30 de abril y del 23 de septiembre al 20 de diciembre de 2024",
+  };
+  const ANIO0 = 2011;          // Mazar se llenó en 2010; desde 2011 opera con el embalse completo
+  let cmpSel = "todos", cmpTodas = false;
+  const hist = k => (HISTD && HISTD[k]) || (HISTV && HISTV[k]);
+  const cH = k => { const v = hist(k); return v && v.c; };
+  const DIAS = []; for (let d = new Date(2000, 6, 1); d <= new Date(2000, 11, 31); d.setDate(d.getDate() + 1)) DIAS.push(new Date(d));
+  const LAB = DIAS.map(d => d.getDate() + " " + MON[d.getMonth()]);
+  const valAnio = y => DIAS.map(d => cH(iso(new Date(y, d.getMonth(), d.getDate()))) || null);
+  const PUNTO = '<span class="inline-block w-2 h-2 rounded-full bg-rose-500 align-middle ml-1" title="hubo cortes de luz"></span>';
+  const BTN = on => "px-3 py-1.5 rounded-lg text-xs font-semibold border transition " + (on ? "bg-sky-500/15 text-sky-200 border-sky-500/50" : "bg-slate-900 text-slate-400 border-slate-700 hover:text-slate-200 hover:border-slate-500");
 
-    // proyección del simulador desde hoy
+  function aniosDisponibles(y0) {
+    const out = [];
+    for (let y = ANIO0; y < y0; y++) if (cH(iso(new Date(y, 6, 1))) || cH(iso(new Date(y, 6, 5)))) out.push(y);
+    return out;
+  }
+  function subpestanas(y0) {
+    const anios = aniosDisponibles(y0);
+    const fijos = [y0 - 1, y0 - 2, y0 - 3].filter(y => anios.includes(y));
+    const otros = anios.filter(y => !fijos.includes(y)).reverse();
+    const sel = String(cmpSel);
+    let h = `<button type="button" role="tab" data-anio="todos" aria-selected="${sel === "todos"}" class="${BTN(sel === "todos")}">Todos los años</button>`;
+    h += fijos.map(y => `<button type="button" role="tab" data-anio="${y}" aria-selected="${sel === String(y)}" class="${BTN(sel === String(y))}">${y}${CORTES[y] ? PUNTO : ""}</button>`).join("");
+    if (otros.length) {
+      const on = otros.map(String).includes(sel);
+      h += `<select id="cmp-otro" aria-label="Otro año" class="${BTN(on)} pr-2"><option value="">Más años…</option>` +
+        otros.map(y => `<option value="${y}" ${sel === String(y) ? "selected" : ""}>${y}</option>`).join("") + `</select>`;
+    }
+    if (!HISTV) h += `<span class="text-[11px] text-slate-500">cargando 2011–2022…</span>`;
+    $("cmp-sub").innerHTML = h;
+    $("cmp-sub").querySelectorAll("button").forEach(b => b.onclick = () => { cmpSel = b.dataset.anio; comparacion(); });
+    const s = $("cmp-otro"); if (s) s.onchange = () => { if (s.value) { cmpSel = s.value; comparacion(); } };
+  }
+  function base26(hoy, y0, cota) {
+    const iHoy = DIAS.findIndex(d => d.getMonth() === hoy.getMonth() && d.getDate() === hoy.getDate());
+    const v26 = valAnio(y0).map((v, i) => i < iHoy ? v : (i === iHoy ? cota : null));
     const Rb = correrBase();
-    const proy = dias.map(() => null);
-    if (Rb && iHoy >= 0) Rb.daily.forEach(r => { const i = iHoy + Math.round(r.t); if (r.t <= 45 && Math.abs(r.t - Math.round(r.t)) < 1e-9 && i < dias.length) proy[i] = r.cota; });
+    const proy = DIAS.map(() => null);
+    if (Rb && iHoy >= 0) Rb.daily.forEach(r => { const i = iHoy + Math.round(r.t); if (r.t <= 45 && Math.abs(r.t - Math.round(r.t)) < 1e-9 && i < DIAS.length) proy[i] = r.cota; });
+    return { iHoy, v26, proy };
+  }
+  const ds26 = (y0, b) => [
+    { label: String(y0), data: b.v26, borderColor: C.sky, borderWidth: 3, pointRadius: b.v26.map((v, i) => i === b.iHoy ? 5 : 0), pointBackgroundColor: C.sky, tension: .2, spanGaps: true },
+    { label: "Proyección del simulador", data: b.proy, borderColor: C.sky, borderWidth: 2, borderDash: [5, 4], pointRadius: 0, tension: .2, spanGaps: true }];
+  const LIN_PARADA = { v: PARADA, color: C.rose, dash: [6, 4], txt: "parada de Mazar 2.115", abajo: true };
+  const ley = (cls, txt) => `<span class="inline-flex items-center gap-1.5"><span class="${cls}"></span>${txt}</span>`;
+  function pintar(data, todos, ex) {
+    const yMin = Math.floor(Math.min(...todos, PARADA) - 3), yMax = Math.ceil(Math.max(...todos) + 1);
+    if (chComp) chComp.destroy();
+    chComp = new Chart($("cmp-chart").getContext("2d"), { type: "line", data: { labels: LAB, datasets: data }, options: opciones(yMin, yMax, ex), plugins: [franjas] });
+  }
+  function fechaHoy() { return D.sincronizado_con && D.sincronizado_con.cota_hora ? new Date(D.sincronizado_con.cota_hora) : new Date(); }
 
-    let txt = `Hoy Mazar está <b class="text-white">${f(Math.abs(cota - c24), 1)} m ${cota >= c24 ? "más arriba" : "más abajo"}</b> que el mismo día de 2024. `;
-    if (igual && ventaja > 0) txt += `La cota de hoy es la que tenía el <b class="text-white">${igual.getDate()} de ${MESL[igual.getMonth()]} de 2024</b>: llevamos unos <b class="text-sky-300">${ventaja} días de ventaja</b> (unas ${Math.round(ventaja / 7)} semanas).`;
-    else if (igual && ventaja < 0) txt += `En 2024 Mazar llegó a la cota de hoy recién el <b class="text-white">${igual.getDate()} de ${MESL[igual.getMonth()]}</b>: este año vamos <b class="text-rose-300">${-ventaja} días adelantados</b> hacia el mínimo.`;
+  function comparacion() {
+    const hoy = fechaHoy(), y0 = hoy.getFullYear();
+    subpestanas(y0);
+    if (cmpSel === "todos") return comparacionTodos(hoy, y0);
+    return comparacionAnio(hoy, y0, +cmpSel);
+  }
+
+  function comparacionAnio(hoy, y0, y) {
+    const cota = D.cota_mazar;
+    const mismo = new Date(y, hoy.getMonth(), hoy.getDate());
+    const hace = (d, n) => { const x = new Date(d); x.setDate(x.getDate() - n); return iso(x); };
+    const cy = cH(iso(mismo));
+    const vy = valAnio(y);
+    let igual = null;
+    for (let i = 0; i < DIAS.length; i++) if (vy[i] != null && vy[i] <= cota) { igual = new Date(y, DIAS[i].getMonth(), DIAS[i].getDate()); break; }
+    const ventaja = igual ? Math.round((mismo - igual) / 86400000) : null;
+    let iMin = vy.findIndex(v => v != null); vy.forEach((v, i) => { if (v != null && v < vy[iMin]) iMin = i; });
+    const bajo = vy.filter(v => v != null && v < PARADA).length;
+    const b = base26(hoy, y0, cota);
+
+    $("cmp-tit").textContent = `📅 2026 vs. ${y}` + (CORTES[y] ? ", un año con cortes" : "");
+    let txt = `Hoy Mazar está <b class="text-white">${f(Math.abs(cota - cy), 1)} m ${cota >= cy ? "más arriba" : "más abajo"}</b> que el mismo día de ${y}. `;
+    if (igual && ventaja > 0) txt += `La cota de hoy es la que tenía el <b class="text-white">${igual.getDate()} de ${MESL[igual.getMonth()]} de ${y}</b>: llevamos unos <b class="text-sky-300">${ventaja} días de ventaja</b>${ventaja >= 14 ? ` (unas ${Math.round(ventaja / 7)} semanas)` : ""}.`;
+    else if (igual && ventaja < 0) txt += `En ${y} Mazar llegó a la cota de hoy recién el <b class="text-white">${igual.getDate()} de ${MESL[igual.getMonth()]}</b>: este año vamos <b class="text-rose-300">${-ventaja} días adelantados</b> hacia el mínimo.`;
+    else if (!igual) txt += `En ${y} Mazar <b class="text-white">nunca bajó a la cota de hoy</b> entre julio y diciembre: su mínimo fue ${f(vy[iMin], 1)} m.`;
     $("cmp-txt").innerHTML = txt;
 
-    const c26_7 = c(hace(hoy, 7)), c26_30 = c(hace(hoy, 30)), c24_7 = c(hace(mismo24, 7)), c24_30 = c(hace(mismo24, 30));
-    const filas = [["Cota (m s.n.m.)", f(cota, 2), f(c24, 2)],
-      ["Sobre la parada de Mazar (2.115)", sgn(cota - PARADA, 2) + " m", sgn(c24 - PARADA, 2) + " m"],
-      ["Cambio en 7 días", c26_7 ? sgn(cota - c26_7) + " m" : "–", c24_7 ? sgn(c24 - c24_7) + " m" : "–"],
-      ["Cambio en 30 días", c26_30 ? sgn(cota - c26_30) + " m" : "–", c24_30 ? sgn(c24 - c24_30) + " m" : "–"]];
-    $("cmp-tbl").innerHTML = `<tr class="text-[11px] uppercase tracking-wider text-slate-500"><th class="text-left py-1.5"></th><th class="text-right py-1.5">Hoy</th><th class="text-right py-1.5">Mismo día 2024</th></tr>` +
+    const c7 = cH(hace(hoy, 7)), c30 = cH(hace(hoy, 30)), cy7 = cH(hace(mismo, 7)), cy30 = cH(hace(mismo, 30));
+    const filas = [["Cota (m s.n.m.)", f(cota, 2), f(cy, 2)],
+      ["Sobre la parada de Mazar (2.115)", sgn(cota - PARADA, 2) + " m", sgn(cy - PARADA, 2) + " m"],
+      ["Cambio en 7 días", c7 ? sgn(cota - c7) + " m" : "–", cy7 ? sgn(cy - cy7) + " m" : "–"],
+      ["Cambio en 30 días", c30 ? sgn(cota - c30) + " m" : "–", cy30 ? sgn(cy - cy30) + " m" : "–"]];
+    $("cmp-tbl").innerHTML = `<tr class="text-[11px] uppercase tracking-wider text-slate-500"><th class="text-left py-1.5"></th><th class="text-right py-1.5">Hoy</th><th class="text-right py-1.5">Mismo día ${y}</th></tr>` +
       filas.map(r => `<tr class="border-t border-slate-800"><td class="py-2 text-slate-300">${r[0]}</td><td class="py-2 text-right mono text-sky-300 font-bold whitespace-nowrap">${r[1]}</td><td class="py-2 text-right mono text-amber-300 whitespace-nowrap">${r[2]}</td></tr>`).join("");
-    const m24 = new Date(2024, dias[iMin].getMonth(), dias[iMin].getDate());
-    $("cmp-nota").innerHTML = `En 2024 la cota llegó a <b class="text-amber-300">${f(v24[iMin], 2)} m el ${m24.getDate()} de ${MESL[m24.getMonth()]}</b> y pasó <b class="text-slate-200">${bajo} días</b> por debajo de 2.115 entre julio y diciembre. Los cortes de luz nacionales fueron del 23 de septiembre al 20 de diciembre de 2024. Cotas diarias de Celec Sur; la de hoy es la lectura de las ${String(hoy.getHours()).padStart(2, "0")}:00.`;
+    const mm = new Date(y, DIAS[iMin].getMonth(), DIAS[iMin].getDate());
+    const cortesTxt = CORTES_TXT[y] ? ` Los cortes de luz nacionales fueron ${CORTES_TXT[y]}.` : ` En ${y} no hubo cortes de luz nacionales.`;
+    $("cmp-nota").innerHTML = `En ${y} la cota llegó a <b class="text-amber-300">${f(vy[iMin], 2)} m el ${mm.getDate()} de ${MESL[mm.getMonth()]}</b>` +
+      (bajo ? ` y pasó <b class="text-slate-200">${bajo} días</b> por debajo de 2.115 entre julio y diciembre.` : `; no bajó de 2.115 entre julio y diciembre.`) +
+      cortesTxt + ` Cotas diarias de Celec Sur; la de hoy es la lectura de las ${String(hoy.getHours()).padStart(2, "0")}:00.`;
+    $("cmp-ley").innerHTML = ley("w-4 h-[3px] rounded bg-sky-400", y0) + ley("w-4 border-t-2 border-dashed border-sky-400", "proyección del simulador") +
+      ley("w-4 h-[3px] rounded bg-amber-500", y) + (CORTES[y] ? ley("w-3 h-3 rounded-sm bg-rose-500/20", `cortes de luz ${y}`) : "");
 
-    const todos = v24.concat(v26, proy).filter(v => v != null);
-    const yMin = Math.floor(Math.min(...todos, PARADA) - 3), yMax = Math.ceil(Math.max(...todos) + 1);
-    const ia = dias.findIndex(d => iso(new Date(2024, d.getMonth(), d.getDate())) === CORTES24[0]);
-    const ib = dias.findIndex(d => iso(new Date(2024, d.getMonth(), d.getDate())) === CORTES24[1]);
-    const data = { labels: lab, datasets: [
-      { label: "2026", data: v26, borderColor: C.sky, borderWidth: 3, pointRadius: v26.map((v, i) => i === iHoy ? 5 : 0), pointBackgroundColor: C.sky, tension: .2, spanGaps: true },
-      { label: "Proyección del simulador", data: proy, borderColor: C.sky, borderWidth: 2, borderDash: [5, 4], pointRadius: 0, tension: .2, spanGaps: true },
-      { label: "2024", data: v24, borderColor: C.amber, borderWidth: 2.2, pointRadius: v24.map((v, i) => i === iMin ? 5 : 0), pointBackgroundColor: C.amber, tension: .2, spanGaps: true }] };
-    const ex = { v: [{ de: ia, a: ib, color: "rgba(244, 63, 94, 0.09)", txt: "cortes de luz 2024", txtColor: "#fb7185" }],
-      lin: [{ v: PARADA, color: C.rose, dash: [6, 4], txt: "parada de Mazar 2.115", abajo: true }] };
-    if (chComp) chComp.destroy();
-    chComp = new Chart($("cmp-chart").getContext("2d"), { type: "line", data, options: opciones(yMin, yMax, ex), plugins: [franjas] });
+    // franjas de cortes dentro de jul–dic (los de abril de 2024 quedan fuera del gráfico)
+    const k = d => iso(new Date(y, d.getMonth(), d.getDate()));
+    const v = (CORTES[y] || []).filter(([a, bb]) => bb >= `${y}-07-01`).map(([a, bb]) => {
+      const ia = DIAS.findIndex(d => k(d) >= a), ib = DIAS.findIndex(d => k(d) >= bb);
+      return { de: Math.max(0, ia), a: ib < 0 ? DIAS.length - 1 : ib, color: "rgba(244, 63, 94, 0.09)", txt: `cortes de luz ${y}`, txtColor: "#fb7185" };
+    });
+    const data = ds26(y0, b).concat([{ label: String(y), data: vy, borderColor: C.amber, borderWidth: 2.2, pointRadius: vy.map((x, i) => i === iMin ? 5 : 0), pointBackgroundColor: C.amber, tension: .2, spanGaps: true }]);
+    pintar(data, vy.concat(b.v26, b.proy).filter(x => x != null), { v, lin: [LIN_PARADA] });
+  }
+
+  function comparacionTodos(hoy, y0) {
+    const cota = D.cota_mazar;
+    const anios = aniosDisponibles(y0);
+    const series = {}; anios.forEach(y => series[y] = valAnio(y));
+    const lo = [], hi = [], med = [];
+    DIAS.forEach((d, i) => {
+      const vs = anios.map(y => series[y][i]).filter(x => x != null).sort((a, b) => a - b);
+      lo.push(vs.length >= 3 ? vs[0] : null); hi.push(vs.length >= 3 ? vs[vs.length - 1] : null); med.push(vs.length >= 3 ? vs[Math.floor(vs.length / 2)] : null);
+    });
+    const hoyD = anios.map(y => [y, cH(iso(new Date(y, hoy.getMonth(), hoy.getDate())))]).filter(p => p[1]);
+    const masBajos = hoyD.filter(p => p[1] < cota).sort((a, b) => a[1] - b[1]);
+    const prom = hoyD.reduce((a, p) => a + p[1], 0) / hoyD.length;
+    const n = hoyD.length + 1, pos = masBajos.length + 1;
+    const b = base26(hoy, y0, cota);
+
+    $("cmp-tit").textContent = `📅 2026 vs. ${anios[0]}–${anios[anios.length - 1]}`;
+    let txt = `Para un ${hoy.getDate()} de ${MESL[hoy.getMonth()]}, Mazar está hoy <b class="text-white">${f(Math.abs(cota - prom), 1)} m ${cota >= prom ? "por encima" : "por debajo"} del promedio</b> de ${hoyD.length} años (${f(prom, 1)} m). `;
+    if (!masBajos.length) txt += `<b class="text-rose-300">Es la cota más baja</b> para esta fecha desde ${anios[0]}.`;
+    else txt += `Es la <b class="text-sky-300">${pos}.ª más baja de ${n}</b> para esta fecha: solo ${masBajos.length === 1 ? "estuvo más abajo" : "estuvieron más abajo"} <b class="text-white">${masBajos.map(p => p[0]).join(", ")}</b>.`;
+    $("cmp-txt").innerHTML = txt;
+
+    const resumen = y => {
+      const s = series[y]; let iM = s.findIndex(x => x != null); s.forEach((x, i) => { if (x != null && x < s[iM]) iM = i; });
+      return { min: s[iM], d: DIAS[iM], bajo: s.filter(x => x != null && x < PARADA).length };
+    };
+    const orden = anios.slice().sort((a, b) => { const ca = hoyD.find(p => p[0] === a), cb = hoyD.find(p => p[0] === b); return (ca ? ca[1] : 1e9) - (cb ? cb[1] : 1e9); });
+    const filas = orden.map((y, k) => {
+      const r = resumen(y), hc = hoyD.find(p => p[0] === y);
+      return `<tr class="border-t border-slate-800 ${k >= 5 ? "cmp-extra hidden" : ""}"><td class="py-2 text-slate-300 whitespace-nowrap">${y}${CORTES[y] ? PUNTO : ""}</td><td class="py-2 text-right mono text-amber-300">${hc ? f(hc[1], 1) : "–"}</td><td class="py-2 text-right mono text-slate-300 whitespace-nowrap">${f(r.min, 1)} <span class="text-slate-500 text-xs">(${r.d.getDate()} ${MON[r.d.getMonth()]})</span></td><td class="py-2 text-right mono text-slate-300">${r.bajo || "–"}</td></tr>`;
+    });
+    $("cmp-tbl").innerHTML = `<tr class="text-[11px] uppercase tracking-wider text-slate-500"><th class="text-left py-1.5">Año</th><th class="text-right py-1.5">Cota el ${hoy.getDate()} ${MON[hoy.getMonth()]}</th><th class="text-right py-1.5">Mínimo jul–dic</th><th class="text-right py-1.5">Días bajo 2.115</th></tr>` +
+      `<tr class="border-t border-slate-800 bg-sky-500/10"><td class="py-2 text-white font-bold">${y0}</td><td class="py-2 text-right mono text-sky-300 font-bold">${f(cota, 1)}</td><td class="py-2 text-right text-slate-500">–</td><td class="py-2 text-right text-slate-500">–</td></tr>` + filas.join("") +
+      `<tr><td colspan="4" class="pt-3"><button type="button" id="cmp-ver" class="${BTN(false)} text-sky-300"></button></td></tr>`;
+    const poner = () => { $("cmp-tbl").querySelectorAll(".cmp-extra").forEach(t => t.classList.toggle("hidden", !cmpTodas)); $("cmp-ver").textContent = cmpTodas ? "Ver solo los 5 más bajos" : `Ver los ${anios.length} años`; };
+    $("cmp-ver").onclick = () => { cmpTodas = !cmpTodas; poner(); }; poner();
+    $("cmp-nota").innerHTML = `La tabla ordena los años de la cota más baja a la más alta para esta fecha. La franja gris va de la cota más baja a la más alta que tuvo Mazar cada día entre ${anios[0]} y ${anios[anios.length - 1]}; la línea gris es la mediana. Los años con ${PUNTO} tuvieron cortes de luz nacionales: 2023 (27 oct–19 dic) y 2024 (15–30 abr y 23 sep–20 dic). 2010 no se incluye porque Mazar todavía se estaba llenando. Cotas diarias de Celec Sur.`;
+    $("cmp-ley").innerHTML = ley("w-4 h-[3px] rounded bg-sky-400", y0) + ley("w-4 border-t-2 border-dashed border-sky-400", "proyección del simulador") +
+      ley("w-3 h-3 rounded-sm bg-slate-500/30", `rango ${anios[0]}–${anios[anios.length - 1]}`) + ley("w-4 h-[3px] rounded bg-slate-400", "mediana") +
+      ley("w-4 h-[3px] rounded bg-amber-500", "2024") + ley("w-4 h-[3px] rounded bg-rose-500", "2023");
+    const sinP = { pointRadius: 0, tension: .2, spanGaps: true, sinTip: true };
+    const data = [
+      Object.assign({ label: "máx.", data: hi, borderColor: "transparent", borderWidth: 0, fill: false }, sinP),
+      Object.assign({ label: "mín.", data: lo, borderColor: "transparent", borderWidth: 0, fill: "-1", backgroundColor: "rgba(148,163,184,0.16)" }, sinP),
+      { label: "Mediana", data: med, borderColor: "rgba(148,163,184,.8)", borderWidth: 1.6, pointRadius: 0, tension: .2, spanGaps: true },
+    ];
+    if (series[2023]) data.push({ label: "2023", data: series[2023], borderColor: "rgba(244,63,94,.8)", borderWidth: 1.6, pointRadius: 0, tension: .2, spanGaps: true });
+    if (series[2024]) data.push({ label: "2024", data: series[2024], borderColor: "rgba(245,158,11,.85)", borderWidth: 1.6, pointRadius: 0, tension: .2, spanGaps: true });
+    pintar(ds26(y0, b).concat(data), lo.concat(hi, b.v26, b.proy).filter(x => x != null), { lin: [LIN_PARADA] });
   }
 
   /* ---------- Región de proyección (mismo cálculo que la pestaña principal con los datos del día) ---------- */
@@ -220,8 +329,8 @@
   }
 
   /* ---------- arranque ---------- */
-  async function historial() {
-    for (const u of HIST_URLS) { try { const r = await fetch(u, { cache: "no-store" }); if (r.ok) return await r.json(); } catch (e) { } }
+  async function historial(urls = HIST_URLS) {
+    for (const u of urls) { try { const r = await fetch(u, { cache: "no-store" }); if (r.ok) return await r.json(); } catch (e) { } }
     return null;
   }
   function iniciar() {
@@ -235,6 +344,7 @@
     mostrar(actual());
     fetch("./datos_sni.json?t=" + Date.now()).then(r => r.ok ? r.json() : null).then(j => { if (j && j.cota_mazar) { D = j; dibujar(actual()); publicarEscenarios(); } }).catch(() => { });
     historial().then(j => { if (j) { HISTD = j; dibujar(actual()); } });
+    historial(HISTV_URLS).then(j => { if (j) { HISTV = j; dibujar(actual()); } });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar); else iniciar();
 })();
