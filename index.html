@@ -533,10 +533,11 @@
         <h2 class="text-lg md:text-xl font-extrabold text-white">🌊 Región de proyección</h2>
         <p class="text-sm text-slate-400 mt-2 max-w-3xl leading-relaxed">La franja reúne los caminos posibles de Mazar con los datos de hoy: tres escenarios del río Coca (sube como se pronostica, se queda igual o baja 15 %) combinados con lluvia o semana seca en la cuenca del Paute. La línea gruesa es la proyección del simulador; las punteadas, los demás escenarios.</p>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="bg-slate-950/60 border border-rose-500/30 rounded-xl p-4"><div class="text-[11px] uppercase tracking-wider font-semibold text-rose-400">Lo más pronto · 2.116</div><div id="reg-temprano" class="mono text-2xl md:text-3xl font-bold text-rose-300 mt-1">–</div><p id="reg-temprano-txt" class="text-xs text-slate-400 mt-1"></p></div>
         <div class="bg-slate-950/60 border border-sky-500/40 rounded-xl p-4"><div class="text-[11px] uppercase tracking-wider font-semibold text-sky-400">Proyección del simulador</div><div id="reg-prin" class="mono text-2xl md:text-3xl font-bold text-sky-300 mt-1">–</div><p id="reg-prin-txt" class="text-xs text-slate-400 mt-1">Coca según GloFAS y lluvia pronosticada en el Paute</p></div>
         <div id="reg-tarde-box" class="bg-slate-950/60 border border-emerald-500/30 rounded-xl p-4"><div class="text-[11px] uppercase tracking-wider font-semibold text-emerald-400">Lo más tarde · 2.116</div><div id="reg-tarde" class="mono text-2xl md:text-3xl font-bold text-emerald-300 mt-1">–</div><p id="reg-tarde-txt" class="text-xs text-slate-400 mt-1"></p></div>
+        <div id="reg-sombra-box" class="bg-slate-950/60 border border-purple-500/40 rounded-xl p-4 flex flex-col justify-between"><div class="flex items-center justify-between gap-1"><div class="text-[11px] uppercase tracking-wider font-semibold text-purple-400">Ajuste Río Coca · 2.116</div><span class="text-[9px] font-bold text-purple-300 bg-purple-900/60 border border-purple-700/50 px-1.5 py-0.5 rounded-full">Próximo</span></div><div id="reg-sombra" class="mono text-2xl md:text-3xl font-bold text-purple-300 mt-1">–</div><p id="reg-sombra-txt" class="text-xs text-purple-300/80 mt-1 leading-snug">Caudal real del Coca con tope físico de 1.200 MW</p></div>
       </div>
       <div class="relative h-[300px] md:h-[380px]"><canvas id="reg-chart"></canvas></div>
       <div class="overflow-x-auto"><table id="reg-tbl" class="w-full text-sm"></table></div>
@@ -1119,6 +1120,6 @@
     pintarCortes();
     if (document.readyState === 'complete') pintarReal(); else window.addEventListener('load', pintarReal);
   </script>
-  <script src="pestanas.js?v=20261023a"></script>
+  <script src="pestanas.js?v=20261028_coca"></script>
 </body>
 </html>
