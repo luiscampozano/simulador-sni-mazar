@@ -282,7 +282,18 @@
     const paute = [{ id: "lluvia", txt: "lluvia pronosticada", ex: {} }];
     if (M.serieMazarSeca) paute.push({ id: "seca", txt: "semana seca como la anterior", ex: { serieMazar: M.serieMazarSeca } });
     const E = [];
-    for (const c of coca) for (const p of paute) { const R = correr(c.q, c.w, Object.assign({}, c.ex, p.ex)); E.push({ coca: c, paute: p, R, Z: ModeloMazar.zonaCritica(R, cota), principal: c.id === "pron" && p.id === "lluvia" }); }
+    for (const c of coca) for (const p of paute) { const R = correr(c.q, c.w, Object.assign({}, c.ex, p.ex)); E.push({ coca: c, paute: p, R, Z: ModeloMazar.zonaCritica(R, cota), principal: c.id === "pron" && p.id === "lluvia", sombra: false }); }
+    if (M.serieCocaRio) {
+      const R_somb = correr(q, "auto", { serieCoca: M.serieCocaRio });
+      E.push({
+        coca: { id: "sombra", txt: "modelo con el ajuste del río Coca (próximo a ser incorporado)", q, w: "auto", ex: { serieCoca: M.serieCocaRio } },
+        paute: { id: "lluvia", txt: "lluvia pronosticada", ex: {} },
+        R: R_somb,
+        Z: ModeloMazar.zonaCritica(R_somb, cota),
+        principal: false,
+        sombra: true
+      });
+    }
     const fecha = t => { const d = new Date(hoy.getTime() + t * 86400000); return `${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}`; };
     const conE = E.filter(e => e.Z.entrada !== null).sort((a, b) => a.Z.entrada - b.Z.entrada);
     const pr = E.find(e => e.principal), temprano = conE[0], tarde = E.some(e => e.Z.entrada === null) ? null : conE[conE.length - 1];
@@ -302,7 +313,10 @@
       E.map(e => {
         const z = e.Z, mn = z.minimo;
         const para = e.R.crossDay !== null && z.paradaEnVentana ? fecha(e.R.crossDay) : (mn ? "no (mín. " + f(mn.cota, 1) + ")" : "no");
-        return `<tr class="border-t border-slate-800 ${e.principal ? "font-semibold" : ""}"><td class="py-2 text-slate-200">Coca ${e.coca.txt}<div class="text-xs text-slate-500 font-normal">Paute: ${e.paute.txt}</div>${e.principal ? '<div class="text-xs text-sky-400">proyección del simulador</div>' : ""}</td><td class="py-2 text-right mono whitespace-nowrap ${z.entrada !== null && z.entrada < 14 ? "text-rose-300" : "text-amber-300"}">${z.entrada === null ? "más de 60 días" : fecha(z.entrada)}</td><td class="py-2 pl-3 text-right mono text-slate-300">${para}</td></tr>`;
+        const esSomb = e.sombra;
+        const titEsc = esSomb ? `<span class="text-purple-300 font-semibold">${e.coca.txt}</span>` : `Coca ${e.coca.txt}`;
+        const subEsc = esSomb ? `<div class="text-xs text-purple-400 font-normal">Paute: ${e.paute.txt} · Caudal real con tope 1.200 MW</div>` : `<div class="text-xs text-slate-500 font-normal">Paute: ${e.paute.txt}</div>${e.principal ? '<div class="text-xs text-sky-400">proyección del simulador</div>' : ""}`;
+        return `<tr class="border-t ${esSomb ? "border-purple-900/50 bg-purple-950/20" : "border-slate-800"} ${e.principal ? "font-semibold" : ""}"><td class="py-2 ${esSomb ? "text-purple-200" : "text-slate-200"}">${titEsc}${subEsc}</td><td class="py-2 text-right mono whitespace-nowrap ${esSomb ? "text-purple-300 font-semibold" : (z.entrada !== null && z.entrada < 14 ? "text-rose-300" : "text-amber-300")}">${z.entrada === null ? "más de 60 días" : fecha(z.entrada)}</td><td class="py-2 pl-3 text-right mono ${esSomb ? "text-purple-300 font-semibold" : "text-slate-300"}">${para}</td></tr>`;
       }).join("");
 
     // gráfico: 20 días de historia + 45 de región
@@ -319,7 +333,8 @@
     const ds = [
       { label: "Máximo de la región", data: sup, borderColor: "rgba(56,189,248,.5)", borderWidth: 1, pointRadius: 0, fill: "+1", backgroundColor: "rgba(56,189,248,.16)", tension: .2, sinTip: false },
       { label: "Mínimo de la región", data: inf, borderColor: "rgba(56,189,248,.5)", borderWidth: 1, pointRadius: 0, fill: false, tension: .2 },
-      ...E.filter(e => !e.principal).map(e => ({ label: `Coca ${e.coca.txt.replace(/ \(.*\)/, "")} · ${e.paute.txt}`, data: serie(e), borderColor: "rgba(203,213,225,.35)", borderWidth: 1, borderDash: [2, 4], pointRadius: 0, fill: false, tension: .2, sinTip: true })),
+      ...E.filter(e => !e.principal && !e.sombra).map(e => ({ label: `Coca ${e.coca.txt.replace(/ \(.*\)/, "")} · ${e.paute.txt}`, data: serie(e), borderColor: "rgba(203,213,225,.35)", borderWidth: 1, borderDash: [2, 4], pointRadius: 0, fill: false, tension: .2, sinTip: true })),
+      ...(E.filter(e => e.sombra).map(e => ({ label: e.coca.txt, data: serie(e), borderColor: "#c084fc", borderWidth: 2.2, borderDash: [5, 3], pointRadius: 0, fill: false, tension: .2, sinTip: false }))),
       { label: "Proyección del simulador", data: serie(pr), borderColor: C.sky, borderWidth: 3, pointRadius: 0, fill: false, tension: .2 },
       { label: "Medido (Celec Sur)", data: hist, borderColor: "rgba(226,232,240,.6)", borderWidth: 1.5, pointRadius: 3, pointBackgroundColor: C.ink, fill: false, spanGaps: true }];
     const ex = { h: [{ de: PARADA, a: ZC, color: "rgba(245,158,11,.10)" }, { de: yMin, a: PARADA, color: "rgba(244,63,94,.08)" }],
