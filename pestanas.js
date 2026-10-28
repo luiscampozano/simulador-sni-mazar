@@ -371,7 +371,8 @@
     }));
     window.addEventListener("hashchange", () => mostrar(actual()));
     mostrar(actual());
-    fetch("./datos_sni.json?t=" + Date.now()).then(r => r.ok ? r.json() : null).then(j => { if (j && j.cota_mazar) { D = j; dibujar(actual()); publicarEscenarios(); } }).catch(() => { });
+    const urlDatos = (location.hostname.includes("datalabecuador") || location.pathname.includes("/d/")) ? "/d/s/datos_sni.json" : "./datos_sni.json";
+    fetch(urlDatos + "?t=" + Date.now()).then(r => r.ok ? r.json() : null).then(j => { if (j && j.cota_mazar) { D = j; dibujar(actual()); publicarEscenarios(); } }).catch(() => { });
     historial().then(j => { if (j) { HISTD = j; dibujar(actual()); } });
     historial(HISTV_URLS).then(j => { if (j) { HISTV = j; dibujar(actual()); } });
   }
