@@ -309,6 +309,20 @@
     $("reg-prin-txt").textContent = "Coca según GloFAS y lluvia pronosticada en el Paute" + (mismo ? ". Hoy es también el escenario más favorable." : "");
     $("reg-tarde").textContent = tarde ? fecha(tarde.Z.entrada) : "más de 60 días";
     $("reg-tarde-txt").textContent = tarde ? `Coca ${tarde.coca.txt} y ${tarde.paute.txt}` : "algún escenario no llega a 2.116 en 60 días";
+
+    const e_somb = E.find(e => e.sombra);
+    const boxSomb = $("reg-sombra-box") || $("regSombraBox");
+    if (boxSomb) {
+      if (e_somb && e_somb.Z) {
+        boxSomb.classList.remove("fuera");
+        const elFecha = $("reg-sombra") || $("regSombra");
+        if (elFecha) elFecha.textContent = e_somb.Z.entrada !== null ? fecha(e_somb.Z.entrada) : "más de 60 días";
+        const elTxt = $("reg-sombra-txt") || $("regSombraTxt");
+        if (elTxt) elTxt.textContent = "Caudal real del Coca con tope físico de 1.200 MW";
+      } else {
+        boxSomb.classList.add("fuera");
+      }
+    }
     $("reg-tbl").innerHTML = `<tr class="text-[11px] uppercase tracking-wider text-slate-500"><th class="text-left py-1.5">Escenario</th><th class="text-right py-1.5">Entra a 2.116</th><th class="text-right py-1.5">Llega a 2.115</th></tr>` +
       E.map(e => {
         const z = e.Z, mn = z.minimo;
