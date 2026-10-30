@@ -1,9 +1,9 @@
 {
-  "fecha_reporte": "VIERNES 30 OCT 2026 (17h45)",
+  "fecha_reporte": "VIERNES 30 OCT 2026 (18h06)",
   "cota_mazar": 2123.43,
   "caida_24h": 0.54,
   "caudal_mazar": 50.0,
-  "caudal_coca": 201.0,
+  "caudal_coca": 200.0,
   "importacion_colombia_mw": 0,
   "temp_costa_c": 31.5,
   "demanda_base_mw": 4603,
@@ -14,8 +14,8 @@
   "paute_7d_mw": 578,
   "fisica_periodo": "2026-10-20 a 2026-10-29",
   "hm3_por_metro": 5.59,
-  "demanda_atendida_mw": 4118,
-  "coca_codo_mw": 1005,
+  "demanda_atendida_mw": 4116,
+  "coca_codo_mw": 1000,
   "caudal_coca_fuente": "Cenace (generación medida de Coca Codo)",
   "termica_mw": 1200,
   "otras_hidro_mw": 1650,
@@ -33,7 +33,7 @@
   },
   "sincronizado_con": {
     "simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
-    "datos_de": "2026-10-30T17:49-05:00",
+    "datos_de": "2026-10-30T18:03-05:00",
     "cota_hora": "2026-10-30T17:00:00-05:00"
   },
   "modelo": {
@@ -213,10 +213,10 @@
     "cutPlan": [
       300.0,
       null,
-      null,
-      null,
-      null,
-      null,
+      300.0,
+      300.0,
+      300.0,
+      300.0,
       null,
       null,
       null,
@@ -699,10 +699,10 @@
     "serie_fecha": "2026-10-30",
     "ccs_paro": {
       "dia": "2026-10-30",
-      "horas": 18.0,
-      "real_mw": 1007,
-      "posible_mw": 1005,
-      "fraccion": 1.002,
+      "horas": 18.5,
+      "real_mw": 1005,
+      "posible_mw": 1000,
+      "fraccion": 1.005,
       "paro": false
     },
     "ccs_crecida": {
@@ -845,71 +845,71 @@
       "nota": "la realidad bajó 0.66 veces lo predicho; se corrige 0.837 (con 9 días)"
     },
     "prediccion_foto": {
-      "dias_critica": 12.3,
-      "cota_3d": 2123.85,
-      "cota_5d": 2123.53
+      "dias_critica": 13.7,
+      "cota_3d": 2124.32,
+      "cota_5d": 2124.92
     },
     "memoria": [
-      21.92,
-      35.49,
-      27.81,
-      26.63,
-      15.45,
-      6.1,
-      4.8,
-      8.52,
-      9.81,
-      4.51,
-      6.24,
-      8.63,
-      9.13,
-      8.7,
-      11.64,
-      13.15,
-      9.42,
-      15.09,
-      19.64,
-      17.98,
-      14.41,
-      14.47,
-      12.28,
-      4.75,
-      6.05,
-      6.6,
-      5.64,
-      5.16,
-      6.6,
-      5.18,
-      -1.88,
-      -0.48,
-      1.08,
-      4.92,
-      6.64,
-      -0.82,
-      -1.18,
-      -8.04,
-      -4.38,
-      -0.27,
-      -2.17,
-      -3.55,
-      -0.8,
-      0.59,
-      -3.93,
-      -1.92,
-      -1.42,
-      -1.51,
-      -0.57,
-      2.11,
+      22.33,
+      35.84,
+      2.48,
+      2.04,
+      -7.61,
+      -15.91,
+      4.96,
+      8.78,
+      10.0,
+      4.71,
+      6.42,
+      8.82,
+      9.35,
+      8.76,
+      11.44,
+      12.96,
+      9.55,
+      15.17,
+      19.76,
+      18.13,
+      14.53,
+      14.63,
+      12.44,
+      4.95,
+      6.25,
+      6.79,
+      5.84,
+      5.32,
+      6.8,
+      5.37,
+      -1.61,
+      -0.28,
+      1.28,
+      5.12,
+      6.96,
+      -0.42,
+      -0.71,
+      -7.57,
+      -4.02,
+      0.05,
+      -1.81,
+      -3.19,
+      -0.52,
+      0.9,
+      -3.65,
+      -1.61,
+      -1.15,
+      -1.27,
+      -0.33,
+      2.38,
+      1.53,
+      -4.4,
+      -2.58,
+      -1.19,
+      0.17,
+      0.08,
       1.3,
-      -4.67,
-      -2.86,
-      -1.39,
-      -0.07,
-      -0.16,
-      1.06,
-      0.76,
-      -3.69,
-      3.58
+      1.03,
+      -3.46,
+      3.82
     ],
     "memoria_info": {
       "corridas": 29,
@@ -922,30 +922,30 @@
       "candidatos": {}
     },
     "prediccion": {
-      "dias_zona_2120": 12.2,
+      "dias_zona_2120": 12.3,
       "rango_zona_2120": [
-        11.8,
-        14.1
+        11.9,
+        14.2
       ],
-      "dias": 16.1,
+      "dias": 16.2,
       "rango": [
-        15.0,
-        23.7
+        15.1,
+        23.8
       ],
-      "ritmo_hoy_m_dia": 0.15,
+      "ritmo_hoy_m_dia": 0.14,
       "numero": {
         "critica": {
-          "dias": 15.7,
+          "dias": 15.8,
           "rango": [
-            12.3,
+            13.1,
             17.3
           ],
           "entran": 1.0
         },
         "parada": {
-          "dias": 16.6,
+          "dias": 16.7,
           "rango": [
-            12.9,
+            13.8,
             18.2
           ],
           "entran": 1.0
@@ -954,10 +954,10 @@
         "peso_ultima": 0.066,
         "nota": "promedio ponderado de las fechas de las corridas de las últimas 48 h (antigüedad y acierto)"
       },
-      "dias_critica": 15.3,
+      "dias_critica": 15.4,
       "rango_critica": [
-        14.4,
-        21.1
+        14.5,
+        21.2
       ],
       "salida_critica": null,
       "parada_en_ventana": true,
@@ -975,13 +975,13 @@
         },
         "2116": {
           "7": 0.0,
-          "14": 0.211,
+          "14": 0.158,
           "30": 0.895
         },
         "2115": {
           "7": 0.0,
           "14": 0.105,
-          "30": 0.895
+          "30": 0.842
         }
       },
       "semana_seca": {
