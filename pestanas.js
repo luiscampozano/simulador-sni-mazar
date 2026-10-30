@@ -276,8 +276,8 @@
   function region() {
     const M = D.modelo || {}, q = D.caudal_coca, q15 = Math.round(q * 0.85), uno = new Array(61).fill(1), cota = D.cota_mazar, hoy = new Date();
     ModeloMazar.configurar(D.modelo);
-    const coca = [{ id: "pron", txt: "sube como pronostica GloFAS", q, w: D.lluvia_coca || "auto", ex: {} },
-      { id: "const", txt: `se queda en ${f(q)} m³/s (hoy)`, q, w: "auto", ex: { serieCoca: uno } },
+    const coca = [{ id: "pron", txt: "sigue el pronóstico de GloFAS", q, w: D.lluvia_coca || "auto", ex: {} },
+      { id: "const", txt: `Coca Codo se queda como hoy (${f(q)} m³/s equivalentes)`, q, w: "auto", ex: { serieCoca: uno } },
       { id: "baja", txt: `baja 15 % (${q15} m³/s)`, q: q15, w: "auto", ex: { serieCoca: uno } }];
     const paute = [{ id: "lluvia", txt: "lluvia pronosticada", ex: {} }];
     if (M.serieMazarSeca) paute.push({ id: "seca", txt: "semana seca como la anterior", ex: { serieMazar: M.serieMazarSeca } });
@@ -286,7 +286,7 @@
     if (M.serieCocaRio) {
       const R_somb = correr(q, "auto", { serieCoca: M.serieCocaRio });
       E.push({
-        coca: { id: "sombra", txt: "modelo con el ajuste del río Coca (próximo a ser incorporado)", q, w: "auto", ex: { serieCoca: M.serieCocaRio } },
+        coca: { id: "sombra", txt: "modelo en prueba desde el 28 oct: usa el caudal real del río Coca", q, w: "auto", ex: { serieCoca: M.serieCocaRio } },
         paute: { id: "lluvia", txt: "lluvia pronosticada", ex: {} },
         R: R_somb,
         Z: ModeloMazar.zonaCritica(R_somb, cota),
