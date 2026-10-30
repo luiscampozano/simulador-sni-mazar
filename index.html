@@ -742,7 +742,8 @@
       const cm = v => (v >= 0 ? '+' : '−') + Math.round(Math.abs(v) * 100) + ' cm';
       const u = ac.ultimo_1d;
       const tono = Math.abs(u.err) < 0.15 ? 'acertó' : (u.err > 0 ? 'fue optimista' : 'fue pesimista');
-      document.getElementById('ac-hoy').innerHTML = `<b>Hace 24 horas</b> (${fh(u.pred_ts)}) el modelo dijo que a las ${fh(u.obj_ts).split(' ').pop()} de hoy Mazar estaría en <b>${c2(u.pred)} m</b>. Fue <b>${c2(u.real)} m</b>: diferencia ${cm(u.err)}, ${tono}.`;
+      const sm = (ac.semana || {})['1']; const semTxt = sm ? `<b>Última semana, a 1 día:</b> error típico <b>${Math.round(sm.mediana_m * 100)} cm</b>; 9 de cada 10 veces menos de ${Math.round(sm.p90_m * 100)} cm. Suponer que el nivel no cambia fallaría ${Math.round(sm.persistencia_m * 100)} cm en promedio (el modelo: ${Math.round(sm.error_medio_m * 100)} cm).<br>` : '';
+      document.getElementById('ac-hoy').innerHTML = semTxt + `<b>Hace 24 horas</b> (${fh(u.pred_ts)}) el modelo dijo que a las ${fh(u.obj_ts).split(' ').pop()} de hoy Mazar estaría en <b>${c2(u.pred)} m</b>. Fue <b>${c2(u.real)} m</b>: diferencia ${cm(u.err)}, ${tono}.`;
       const filas = (ac.recientes_1d || []).slice().reverse().map(v => `<tr class="border-t border-slate-800"><td class="py-1">${fh(v.pred_ts)}</td><td>${fh(v.obj_ts)}</td><td class="mono text-right pl-3">${c2(v.pred)}</td><td class="mono text-right pl-3">${c2(v.real)}</td><td class="mono text-right pl-3">${cm(v.err)}</td></tr>`).join('');
       document.getElementById('ac-tbl').innerHTML = '<thead><tr class="text-slate-400 text-left"><th class="py-1">Dijo el</th><th>Para el</th><th class="text-right pl-3">Predijo</th><th class="text-right pl-3">Real</th><th class="text-right pl-3">Dif.</th></tr></thead><tbody>' + filas + '</tbody>';
       const ph = ac.por_horizonte || {};
