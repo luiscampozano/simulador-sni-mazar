@@ -514,6 +514,15 @@
 
 
 
+    <!-- Aciertos de la semana (pronóstico a 1 día) -->
+    <section id="sem-panel" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+      <h2 class="text-sm md:text-base font-bold text-white">🎯 Aciertos de la semana · pronóstico a 1 día</h2>
+      <p class="text-[11px] text-slate-400">Cada 2 horas el modelo dice dónde estará Mazar 24 horas después; al día siguiente se compara con la cota real de Celec Sur.</p>
+      <div id="sem-kpis" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+      <div class="overflow-x-auto"><table id="sem-tbl" class="w-full text-xs text-slate-300"></table></div>
+      <p id="sem-pie" class="text-[11px] text-slate-400 leading-snug"></p>
+    </section>
+
     <!-- PESTAÑA: 2026 vs. años anteriores -->
     <section id="tab-comp" role="tabpanel" class="fuera bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 space-y-4">
       <div id="cmp-sub" role="tablist" aria-label="Año de comparación" class="flex flex-wrap items-center gap-1.5"></div>
@@ -731,6 +740,31 @@
       }
     }
 
+    function dibujarSemana() {
+      const S = ((DATOS_OFICIALES_DIA.modelo || {}).aciertos || {}).semana_1d, panel = document.getElementById('sem-panel');
+      if (!S || !S.dias || !S.dias.length) { panel.classList.add('hidden'); return; }
+      panel.classList.remove('hidden');
+      const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'], DS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+      const fd = s => { const d = new Date(s.length <= 10 ? s + 'T12:00' : s); return `${DS[d.getDay()]} ${d.getDate()} ${MES[d.getMonth()]}`; };
+      const hh = s => s.slice(11, 16), cm = v => Math.round(Math.abs(v) * 100) + ' cm', m2 = v => { const [e, d] = v.toFixed(2).split('.'); return e.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + d; };
+      const b = S.mejor;
+      const kpi = (v, color, txt) => `<div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800"><div class="mono text-2xl font-extrabold" style="color:${color}">${v}</div><div class="text-[11px] text-slate-400 leading-snug mt-1">${txt}</div></div>`;
+      document.getElementById('sem-kpis').innerHTML =
+        kpi(`${S.n5} de ${S.n}`, '#34d399', 'predicciones con error de 5 cm o menos') +
+        kpi(cm(b.err), '#38bdf8', `mejor acierto: dijo ${m2(b.pred)} m para el ${fd(b.obj_ts)} a las ${hh(b.obj_ts)} y fue ${m2(b.real)} m`) +
+        kpi(cm(S.mediana_m), '#fbbf24', `error típico de la semana (9 de cada 10, menos de ${cm(S.p90_m)})`);
+      const filas = S.dias.map(d => {
+        const col = d.mediana_m <= 0.10 ? '#34d399' : d.mediana_m <= 0.25 ? '#fbbf24' : '#f87171', w = Math.max(3, Math.round(d.n5 / d.n * 100));
+        return `<tr class="border-t border-slate-800"><td class="py-1.5 whitespace-nowrap">${fd(d.dia).replace(/ [a-z]+$/, '')}</td><td class="mono text-right pr-3">${d.n}</td>` +
+          `<td><span class="inline-block align-middle w-10 sm:w-20 h-2 rounded bg-slate-800 overflow-hidden mr-2"><span class="block h-full bg-emerald-400" style="width:${w}%"></span></span><span class="mono">${d.n5}</span></td>` +
+          `<td class="mono text-right pr-3" style="color:${col}">${cm(d.mediana_m)}</td>` +
+          `<td class="mono">${cm(d.mejor.err)} <span class="text-slate-400">· ${hh(d.mejor.obj_ts)}</span>${d.paro_h ? `<br class="sm:hidden"> <span class="text-amber-300 text-[11px]">paro Coca Codo ${d.paro_h} h</span>` : ''}</td></tr>`; }).join('');
+      document.getElementById('sem-tbl').innerHTML = '<thead><tr class="text-slate-400 text-left"><th class="py-1">Día</th><th class="text-right pr-3">Pred.</th><th>≤ 5 cm</th><th class="text-right pr-3">Error típico</th><th>Mejor acierto</th></tr></thead><tbody>' + filas + '</tbody>';
+      const conParo = S.dias.filter(d => d.paro_h).map(d => fd(d.dia));
+      document.getElementById('sem-pie').innerHTML = `Si se dijera “mañana Mazar queda igual que hoy”, el error promedio de la semana sería ${cm(S.persistencia_m)}; el del modelo es ${cm(S.error_medio_m)}.` +
+        (conParo.length ? ` Los paros de Coca Codo por sedimentos (${conParo.join(', ')}) hacen que Paute cubra de golpe y el nivel cambie más de lo previsto; desde el 30 oct el modelo no proyecta un paro más allá de ese día.` : '');
+    }
+
     function dibujarAciertos() {
       const M = DATOS_OFICIALES_DIA.modelo || {}, ac = M.aciertos, aj = M.ajuste_info;
       const panel = document.getElementById('ac-panel');
@@ -872,7 +906,7 @@
           `<div class="grid grid-cols-[4.5rem_1fr] gap-x-3 gap-y-1 items-center"><span class="text-xs font-semibold text-slate-300">En ${H} días</span>${barra(pA[H], 'bg-sky-500')}<span></span>${barra(pB[H], 'bg-rose-500')}</div>`).join('');
         document.getElementById('prob-panel').classList.remove('hidden');
       }
-      dibujarAciertos();
+      dibujarAciertos(); try { dibujarSemana(); } catch (e) { console.warn(e); }
       let diasSinColombia = proySin.cruce === null ? Infinity : proySin.cruce;
 
       const serieConColombia = [];
