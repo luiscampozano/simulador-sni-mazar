@@ -1,5 +1,5 @@
 {
-  "fecha_reporte": "DOMINGO 01 NOV 2026 (09h45)",
+  "fecha_reporte": "DOMINGO 01 NOV 2026 (09h56)",
   "cota_mazar": 2125.13,
   "caida_24h": 1.26,
   "caudal_mazar": 67.0,
@@ -33,7 +33,7 @@
   },
   "sincronizado_con": {
     "simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
-    "datos_de": "2026-11-01T09:48-05:00",
+    "datos_de": "2026-11-01T09:53-05:00",
     "cota_hora": "2026-11-01T09:00:00-05:00"
   },
   "modelo": {
