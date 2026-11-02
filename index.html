@@ -794,7 +794,7 @@
       document.getElementById('header-cota-actual').textContent = cotaHoy.toFixed(2).replace('.', ',') + ' m s.n.m.';
       document.getElementById('header-caida-24h').textContent = (DATOS_OFICIALES_DIA.caida_24h >= 0 ? '+' : '') + DATOS_OFICIALES_DIA.caida_24h.toFixed(2).replace('.', ',') + ' m';
       document.getElementById('header-colchon-m').textContent = colchonHoyMetros.toFixed(2).replace('.', ',') + ' metros';
-      document.getElementById('kpi-colchon-badge').textContent = 'Margen: ' + colchonHoyMetros.toFixed(2).replace('.', ',') + ' m';
+      document.getElementById('kpi-colchon-badge').textContent = 'Margen sobre 2.115 m: ' + colchonHoyMetros.toFixed(2).replace('.', ',') + ' m';
       document.getElementById('tank-cota-label').textContent = 'Hoy: ' + cotaHoy.toFixed(2).replace('.', ',') + ' m';
       document.getElementById('tank-percent').textContent = porcentajeUtil.toFixed(1).replace('.', ',') + '% útil';
       document.getElementById('tank-level-bar').style.height = Math.max(24, Math.min(82, 24 + porcentajeUtil * 0.55)) + '%';
