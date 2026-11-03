@@ -957,9 +957,15 @@
         // Número grande oficial (valores del día sin tocar): promedio PONDERADO de las fechas de las corridas de las
         // últimas 48 h (antigüedad y acierto a la cota real), el mismo del otro simulador. No salta con cada corrida.
         const NUM = (MOD.prediccion || {}).numero, D0 = DATOS_OFICIALES_DIA;
-        const igual = (x, y) => Math.abs(parseFloat(x) - parseFloat(y)) < 0.051;
-        const oficial = NUM && igual(qMazar, D0.caudal_mazar) && igual(qCoca, D0.caudal_coca) && igual(importColombiaMW, D0.importacion_colombia_mw)
-          && igual(tempCosta, D0.temp_costa_c) && igual(demandaBase, D0.demanda_base_mw) && igual(cortesMW, D0.cortes_mw)
+        // 3 nov: cada barra redondea al paso de su escala (51,29 → 51,5 m³/s; 4 → 5 MW; 30,2 → 30,0 °C). Antes se exigía
+        // ±0,05 y el valor del día "sin tocar" no calzaba: la página mostraba su cálculo simple ("más de 60 días") en vez
+        // del número oficial. Ahora se acepta hasta medio paso de la barra.
+        const paso = id => parseFloat((document.getElementById(id) || {}).step) || 0.1;
+        const igual = (x, y, id) => Math.abs(parseFloat(x) - parseFloat(y)) <= paso(id) / 2 + 0.001;
+        const oficial = NUM && igual(qMazar, D0.caudal_mazar, 'input-q-mazar') && igual(qCoca, D0.caudal_coca, 'input-q-coca')
+          && igual(importColombiaMW, D0.importacion_colombia_mw, 'input-import-col')
+          && igual(tempCosta, D0.temp_costa_c, 'input-temp-costa') && igual(demandaBase, D0.demanda_base_mw, 'input-demanda-base')
+          && igual(cortesMW, D0.cortes_mw, 'input-cortes-mw')
           && lluviaPaute === (D0.lluvia_paute || lluviaPaute) && lluviaCoca === (D0.lluvia_coca || lluviaCoca);
         if (oficial) {
           const c = NUM.critica, p = NUM.parada;
