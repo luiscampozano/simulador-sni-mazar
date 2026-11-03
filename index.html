@@ -889,8 +889,31 @@
         }, serieM ? { ...ctxModelo, serieMazar: serieM } : ctxModelo);
         return { serie: R.daily.map(r => r.cota), cruce: R.crossDay, R };
       }
-      const proyCon = proyectar(importColombiaMW);
-      const proySin = proyectar(0);
+      let proyCon = proyectar(importColombiaMW);
+      let proySin = proyectar(0);
+      // 3 nov (Luis): con los valores del día SIN TOCAR, la gráfica es la proyección OFICIAL (las mismas entradas del
+      // simulador de Mazar, el que da el número grande: Coca según GloFAS, lluvia pronosticada, térmica medida…). Si se
+      // mueve cualquier barra, es el escenario de esta página con lo elegido (para eso es el simulador).
+      const H0 = DATOS_OFICIALES_DIA.hoy_mazar;
+      const pasoB = id => parseFloat((document.getElementById(id) || {}).step) || 0.1;
+      const igB = (x, y, id) => Math.abs(parseFloat(x) - parseFloat(y)) <= pasoB(id) / 2 + 0.001;
+      const D0b = DATOS_OFICIALES_DIA;
+      const sinTocar = !!H0 && igB(qMazar, D0b.caudal_mazar, 'input-q-mazar') && igB(qCoca, D0b.caudal_coca, 'input-q-coca')
+        && igB(importColombiaMW, D0b.importacion_colombia_mw, 'input-import-col') && igB(tempCosta, D0b.temp_costa_c, 'input-temp-costa')
+        && igB(demandaBase, D0b.demanda_base_mw, 'input-demanda-base') && igB(cortesMW, D0b.cortes_mw, 'input-cortes-mw')
+        && lluviaPaute === (D0b.lluvia_paute || lluviaPaute) && lluviaCoca === (D0b.lluvia_coca || lluviaCoca);
+      if (sinTocar) {
+        const simH = imp => {
+          const R = ModeloMazar.simular({ qMazar: H0.qMazar, qCoca: H0.qCoca, wPaute: H0.wPaute, wCoca: H0.wCoca,
+            demanda: H0.dBase + 50 * (H0.tCosta - 32), cut: H0.cut, imp, therm: H0.therm, other: H0.other },
+            { ...ctxModelo, feriados: MOD.feriados });
+          return { serie: R.daily.map(r => r.cota), cruce: R.crossDay, R };
+        };
+        proyCon = simH(H0.imp); proySin = simH(0);
+      }
+      { const em = document.getElementById('proy-modo');
+        if (em) em.innerHTML = sinTocar ? '<b class="text-sky-300">Proyección oficial</b> con los valores del día (la misma del número grande).'
+          : '<b class="text-amber-300">Escenario con los valores que elegiste</b>: ya no es la proyección oficial. Vuelve a «Datos del Día» para verla.'; }
       let diasHastaColapso = proyCon.cruce === null ? Infinity : proyCon.cruce;
       const f0 = proyCon.R.firstDay;
       const ritmoModelo = -(f0.qturb - f0.qin) * 0.0864 / ModeloMazar.areaEn(cotaHoy);

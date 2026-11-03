@@ -417,6 +417,9 @@ try:
         datos["demanda_base_mw"] = int(h["dBase"] + 50 * (T - 32) - ac_b)
         # Modelo calibrado (curva, Amaluza, pronóstico de caudales, día de la semana, rango): el mismo de A
         datos["modelo"] = A.get("modelo")
+        # Entradas exactas del otro simulador (Luis, 3 nov): con las barras sin tocar, la gráfica dibuja la proyección
+        # oficial con estas entradas, la misma que da el número grande.
+        datos["hoy_mazar"] = {k: h.get(k) for k in ("qMazar", "qCoca", "wPaute", "wCoca", "dBase", "tCosta", "cut", "imp", "therm", "other")}
         datos["sincronizado_con"] = {"simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
                                      "datos_de": A["robot"]["ultima_ejecucion"], "cota_hora": A.get("fecha")}
         print(f"Sincronizado con el otro simulador (datos de {A['robot']['ultima_ejecucion']}, {edad_min:.0f} min).")
