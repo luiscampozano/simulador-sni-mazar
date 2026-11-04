@@ -280,7 +280,7 @@
       { id: "const", txt: `Coca Codo se queda como hoy (${f(q)} m³/s equivalentes)`, q, w: "auto", ex: { serieCoca: uno } },
       { id: "baja", txt: `baja 15 % (${q15} m³/s)`, q: q15, w: "auto", ex: { serieCoca: uno } }];
     const paute = [{ id: "lluvia", txt: "lluvia pronosticada", ex: {} }];
-    if (M.serieMazarSeca) paute.push({ id: "seca", txt: "semana seca como la anterior", ex: { serieMazar: M.serieMazarSeca } });
+    if (M.serieMazarSeca) paute.push({ id: "seca", txt: "semana seca (mitad de la lluvia normal)", ex: { serieMazar: M.serieMazarSeca } });
     const E = [];
     for (const c of coca) for (const p of paute) { const R = correr(c.q, c.w, Object.assign({}, c.ex, p.ex)); E.push({ coca: c, paute: p, R, Z: ModeloMazar.zonaCritica(R, cota), principal: c.id === "pron" && p.id === "lluvia", sombra: false }); }
     if (M.serieCocaRio) {
