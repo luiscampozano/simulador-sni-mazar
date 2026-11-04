@@ -993,7 +993,7 @@
         if (oficial) {
           const c = NUM.critica, p = NUM.parada;
           const rgT = r => r[1] >= 59 ? `${Math.round(r[0])} a más de 60 días` : `${Math.round(r[0])} a ${Math.round(r[1])} días`;
-          const nota = `<br><span class="font-normal text-slate-400">promedio ponderado de ${NUM.corridas} corridas (48 h) · rango: ${rgT(c.rango)}</span>`;
+          const nota = `<br><span class="font-normal text-slate-400">trayectoria promedio de ${NUM.corridas} corridas (48 h) · rango: ${rgT(c.rango)}</span>`;
           if (c.dias >= 59) { kpiDays.textContent = 'Más de 60 días'; kpiDate.innerHTML = 'No entra en la zona crítica en 60 días' + nota; }
           else { kpiDays.textContent = nd(c.dias) + ' días'; kpiDate.innerHTML = `Entraría alrededor del <span class="text-white font-bold">${fch(c.dias)}</span>` + nota; }
           if (p.dias >= 59) { kP.textContent = '+60 días'; kPF.innerHTML = 'No para en 60 días'; }
