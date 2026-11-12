@@ -2,9 +2,9 @@ name: Actualizar Datos SNI Mazar Diariamente
 
 on:
   schedule:
-    # Cada 2 horas en el minuto 17 (hora UTC; Ecuador = UTC-5), sincronizado con
-    # el robot del simulador "Cuenta regresiva Mazar" (luiscampozano/simulador-mazar)
-    - cron: '17 */2 * * *'
+    # Cada hora en el minuto 27 (12 nov, Luis: la cota hora a hora; el robot de simulador-mazar corre cada hora
+    # al minuto 12 y tarda ~4 min). Repositorio público: no gasta minutos de Actions.
+    - cron: '27 * * * *'
   workflow_dispatch: # Permite ejecutarlo manualmente con un botón cuando quieras
 
 permissions:
