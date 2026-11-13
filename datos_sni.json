@@ -1,15 +1,15 @@
 {
-  "fecha_reporte": "JUEVES 12 NOV 2026 (23h22)",
+  "fecha_reporte": "VIERNES 13 NOV 2026 (00h32)",
   "cota_mazar": 2124.7,
-  "caida_24h": -1.17,
+  "caida_24h": -0.91,
   "caudal_mazar": 38.0,
   "caudal_coca": 159.0,
   "importacion_colombia_mw": 5,
   "temp_costa_c": 31.0,
   "demanda_base_mw": 4193,
   "cortes_mw": 300,
-  "cota_amaluza": 1973.42,
-  "cota_sopladora": 1315.53,
+  "cota_amaluza": 1973.24,
+  "cota_sopladora": 1315.48,
   "k_mw_por_m3s": 15.99,
   "paute_7d_mw": 794,
   "fisica_periodo": "2026-11-02 a 2026-11-11",
@@ -20,16 +20,16 @@
   "termica_mw": 1280,
   "otras_hidro_mw": 1330,
   "generacion_firme_mw": 2610,
-  "cenace_ok": true,
+  "cenace_ok": false,
   "lluvia_paute": "auto",
   "lluvia_paute_mm": {
-    "ultimos_7d": 22,
-    "proximos_7d": 59
+    "ultimos_7d": 26,
+    "proximos_7d": 65
   },
   "lluvia_coca": "auto",
   "lluvia_coca_mm": {
-    "ultimos_7d": 56,
-    "proximos_7d": 76
+    "ultimos_7d": 72,
+    "proximos_7d": 63
   },
   "sincronizado_con": {
     "simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
