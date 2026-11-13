@@ -1,0 +1,34 @@
+# Reloj del SNI (Luis, 12 nov). El cron horario de "Actualizar Datos SNI" no se disparó entre las 17:00 y las 21:00
+# del 12 nov (GitHub atrasa o se salta los cron cuando hay mucha carga), y la página se quedó con la cota de las 16:36.
+# Este reloj vigila cada 5 min el último cambio de datos.json en luiscampozano/simulador-mazar (el robot de Mazar) y,
+# apenas cambia, dispara la actualización del SNI. Si en 70 min no hubo cambio, la dispara igual. Bucle de ~5 h 40 min;
+# el cron solo lo reanima si se cae. Repositorio público: no gasta minutos de Actions.
+name: Reloj del SNI (sigue al robot de Mazar)
+on:
+  schedule:
+    - cron: "53 * * * *"
+  workflow_dispatch:
+permissions: { actions: write, contents: read }
+concurrency: { group: reloj-sni, cancel-in-progress: false }
+jobs:
+  reloj:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Vigilar al robot de Mazar y disparar el SNI
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          ultimo() { gh api "repos/luiscampozano/simulador-mazar/commits?path=datos.json&per_page=1" -q '.[0].sha' 2>/dev/null || echo ""; }
+          disparar() { gh api -X POST "repos/${{ github.repository }}/actions/workflows/actualizar_diario.yml/dispatches" -f ref=main && echo "SNI disparado $(date -u +%H:%M) UTC ($1)"; ult_disparo=$(date +%s); }
+          fin=$(( $(date +%s) + 340*60 )); visto=$(ultimo); ult_disparo=$(date +%s)
+          echo "Mazar al empezar: $visto"
+          while [ $(date +%s) -lt $fin ]; do
+            sleep 300
+            s=$(ultimo)
+            if [ -n "$s" ] && [ "$s" != "$visto" ]; then
+              sleep 60   # que GitHub Pages termine de publicar el dato nuevo
+              disparar "Mazar publicó $s"; visto=$s
+            elif [ $(( $(date +%s) - ult_disparo )) -ge 4200 ]; then
+              disparar "70 min sin cambios; actualización igual"
+            fi
+          done
