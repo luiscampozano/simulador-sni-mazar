@@ -1,5 +1,5 @@
 {
-  "fecha_reporte": "VIERNES 20 NOV 2026 (08h22)",
+  "fecha_reporte": "VIERNES 20 NOV 2026 (08h26)",
   "cota_mazar": 2120.17,
   "caida_24h": 0.16,
   "caudal_mazar": 51.0,
@@ -24,12 +24,12 @@
   "lluvia_paute": "auto",
   "lluvia_paute_mm": {
     "ultimos_7d": 48,
-    "proximos_7d": 60
+    "proximos_7d": 51
   },
   "lluvia_coca": "auto",
   "lluvia_coca_mm": {
     "ultimos_7d": 44,
-    "proximos_7d": 68
+    "proximos_7d": 72
   },
   "sincronizado_con": {
     "simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
