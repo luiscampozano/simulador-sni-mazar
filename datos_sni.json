@@ -1,5 +1,5 @@
 {
-  "fecha_reporte": "SÁBADO 21 NOV 2026 (21h17)",
+  "fecha_reporte": "SÁBADO 21 NOV 2026 (21h23)",
   "cota_mazar": 2119.38,
   "caida_24h": -0.96,
   "caudal_mazar": 30.0,
@@ -24,16 +24,16 @@
   "lluvia_paute": "auto",
   "lluvia_paute_mm": {
     "ultimos_7d": 45,
-    "proximos_7d": 74
+    "proximos_7d": 66
   },
   "lluvia_coca": "auto",
   "lluvia_coca_mm": {
     "ultimos_7d": 34,
-    "proximos_7d": 70
+    "proximos_7d": 45
   },
   "sincronizado_con": {
     "simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
-    "datos_de": "2026-11-21T21:11-05:00",
+    "datos_de": "2026-11-21T21:15-05:00",
     "cota_hora": "2026-11-21T21:00:00-05:00"
   },
   "modelo": {
@@ -915,7 +915,7 @@
     "ajuste_info": {
       "factor": 0.969,
       "dias": 17,
-      "casos": 564,
+      "casos": 565,
       "ratio_mediana": 0.95,
       "nota": "la realidad bajó 0.95 veces lo predicho; se corrige 0.969 (con 17 días)"
     },
