@@ -1,5 +1,5 @@
 {
-  "fecha_reporte": "MARTES 24 NOV 2026 (18h16)",
+  "fecha_reporte": "MARTES 24 NOV 2026 (18h35)",
   "cota_mazar": 2118.02,
   "caida_24h": -0.72,
   "caudal_mazar": 27.0,
@@ -14,7 +14,7 @@
   "paute_7d_mw": 804,
   "fisica_periodo": "2026-11-14 a 2026-11-23",
   "hm3_por_metro": 4.42,
-  "demanda_atendida_mw": 4295,
+  "demanda_atendida_mw": 4292,
   "coca_codo_mw": 1000,
   "caudal_coca_fuente": "Cenace (generación medida de Coca Codo)",
   "termica_mw": 1220,
