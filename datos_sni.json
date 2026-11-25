@@ -1,5 +1,5 @@
 {
-  "fecha_reporte": "MIÉRCOLES 25 NOV 2026 (04h18)",
+  "fecha_reporte": "MIÉRCOLES 25 NOV 2026 (05h05)",
   "cota_mazar": 2117.75,
   "caida_24h": -0.61,
   "caudal_mazar": 30.0,
@@ -14,7 +14,7 @@
   "paute_7d_mw": 786,
   "fisica_periodo": "2026-11-15 a 2026-11-24",
   "hm3_por_metro": 4.36,
-  "demanda_atendida_mw": 4345,
+  "demanda_atendida_mw": 4343,
   "coca_codo_mw": 1075,
   "caudal_coca_fuente": "Cenace (generación medida de Coca Codo)",
   "termica_mw": 1220,
@@ -33,7 +33,7 @@
   },
   "sincronizado_con": {
     "simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
-    "datos_de": "2026-11-25T04:13-05:00",
+    "datos_de": "2026-11-25T04:58-05:00",
     "cota_hora": "2026-11-25T04:00:00-05:00"
   },
   "modelo": {
@@ -807,10 +807,10 @@
     "serie_fecha": "2026-11-25",
     "ccs_paro": {
       "dia": "2026-11-25",
-      "horas": 4.5,
-      "real_mw": 750,
+      "horas": 5.0,
+      "real_mw": 740,
       "posible_mw": 1075,
-      "fraccion": 0.698,
+      "fraccion": 0.688,
       "paro": false
     },
     "ccs_crecida": {
@@ -948,7 +948,7 @@
     "ajuste_info": {
       "factor": 0.988,
       "dias": 21,
-      "casos": 634,
+      "casos": 636,
       "ratio_mediana": 0.982,
       "nota": "la realidad bajó 0.98 veces lo predicho; se corrige 0.988 (con 21 días)"
     },
