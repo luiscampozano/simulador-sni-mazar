@@ -402,7 +402,7 @@ try:
         datos["otras_hidro_mw"] = int(h["other"])
         datos["generacion_firme_mw"] = int(h["therm"]) + int(h["other"])
         datos["temp_costa_c"] = T
-        datos["cortes_mw"] = int(h["cut"])
+        datos["cortes_mw"] = int(h["cut_hoy"] if h.get("cut_hoy") is not None else h["cut"])   # Luis 25 nov: el corte real de hoy (plan día por día)
         datos["lluvia_paute"] = h["wPaute"]
         datos["lluvia_coca"] = h["wCoca"]
         fa = A.get("fisica") or {}
