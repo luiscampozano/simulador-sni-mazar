@@ -1,5 +1,5 @@
 {
-  "fecha_reporte": "MIÉRCOLES 25 NOV 2026 (03h22)",
+  "fecha_reporte": "MIÉRCOLES 25 NOV 2026 (03h58)",
   "cota_mazar": 2117.71,
   "caida_24h": -0.67,
   "caudal_mazar": 29.0,
@@ -14,13 +14,13 @@
   "paute_7d_mw": 786,
   "fisica_periodo": "2026-11-15 a 2026-11-24",
   "hm3_por_metro": 4.35,
-  "demanda_atendida_mw": 4336,
+  "demanda_atendida_mw": 4345,
   "coca_codo_mw": 1090,
   "caudal_coca_fuente": "Cenace (generación medida de Coca Codo)",
   "termica_mw": 1220,
   "otras_hidro_mw": 1490,
   "generacion_firme_mw": 2710,
-  "cenace_ok": false,
+  "cenace_ok": true,
   "lluvia_paute": "auto",
   "lluvia_paute_mm": {
     "ultimos_7d": 45,
