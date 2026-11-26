@@ -1,5 +1,5 @@
 {
-  "fecha_reporte": "MIÉRCOLES 25 NOV 2026 (19h21)",
+  "fecha_reporte": "MIÉRCOLES 25 NOV 2026 (19h27)",
   "cota_mazar": 2117.34,
   "caida_24h": -0.68,
   "caudal_mazar": 31.0,
@@ -33,7 +33,7 @@
   },
   "sincronizado_con": {
     "simulador": "Mazar y generación (luiscampozano/simulador-mazar)",
-    "datos_de": "2026-11-25T19:13-05:00",
+    "datos_de": "2026-11-25T19:21-05:00",
     "cota_hora": "2026-11-25T19:00:00-05:00"
   },
   "modelo": {
@@ -948,7 +948,7 @@
     "ajuste_info": {
       "factor": 0.987,
       "dias": 21,
-      "casos": 663,
+      "casos": 665,
       "ratio_mediana": 0.981,
       "nota": "la realidad bajó 0.98 veces lo predicho; se corrige 0.987 (con 21 días)"
     },
